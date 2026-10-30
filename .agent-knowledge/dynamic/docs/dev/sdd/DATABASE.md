@@ -164,6 +164,32 @@ Official outgoing shipments dispatched to customers.
 | `created_at` | `timestamp` | NOT NULL | | Standard audit timestamp |
 | `updated_at` | `timestamp` | NOT NULL | | Standard audit timestamp |
 
+### `cycle_count_orders` & `cycle_count_items`
+Periodic stock opname and blind cycle counting subsystem (Epic 6 / US-014).
+
+| Column | Type | Constraints | Index | Notes |
+|--------|------|-------------|-------|-------|
+| `id` | `uuid` | PK | PRIMARY | Unique Order UUID |
+| `count_number` | `varchar(50)` | NOT NULL, UNIQUE | UNIQUE | e.g. `CC-202610-0001` |
+| `warehouse_id` | `uuid` | FK -> `warehouses.id`, ON DELETE CASCADE | INDEX | Target facility |
+| `zone_id` | `uuid` | FK -> `warehouse_zones.id`, nullable | INDEX | Specific target zone or null for facility-wide |
+| `count_type` | `varchar(30)` | DEFAULT 'BLIND' | | Enum: `BLIND`, `ADHOC`, `SCHEDULED` |
+| `status` | `varchar(30)` | DEFAULT 'DRAFT' | INDEX | Enum: `DRAFT`, `IN_PROGRESS`, `COUNTED`, `REVIEW`, `APPROVED`, `POSTED`, `CANCELLED` |
+| `assigned_to` | `foreignId` | FK -> `users.id`, nullable | | Assigned counter |
+| `approved_by` | `foreignId` | FK -> `users.id`, nullable | | Approving supervisor |
+| `snapshot_at` | `timestamp` | nullable | | Timestamp balance snapshot was frozen |
+| `completed_at` | `timestamp` | nullable | | Timestamp physical count completed |
+| `posted_at` | `timestamp` | nullable | | Timestamp ledger adjustments committed |
+| `notes` | `text` | nullable | | Audit instructions/notes |
+
+`cycle_count_items`:
+- `id` (UUID PK), `cycle_count_order_id` (FK), `bin_id` (FK), `item_id` (FK), `material_lot_id` (FK)
+- `recorded_quantity` (Snapshot balance, concealed during blind counts)
+- `counted_quantity` (Observed physical count from mobile scanner)
+- `variance_quantity` (Computed delta: $counted - recorded$)
+- `status` (`PENDING`, `COUNTED`, `RECOUNT_REQUESTED`, `APPROVED`)
+- Compound unique index: `[cycle_count_order_id, bin_id, item_id, material_lot_id]`
+
 ---
 
 ## 3. Relationships Summary
@@ -180,6 +206,10 @@ Official outgoing shipments dispatched to customers.
 | `material_lots` | `hasMany` | `inventory_movements` | `material_lot_id` |
 | `staging_requests` | `hasMany` | `staging_request_items` | `staging_request_id` |
 | `delivery_orders` | `hasMany` | `delivery_order_items` | `delivery_order_id` |
+| `cycle_count_orders` | `hasMany` | `cycle_count_items` | `cycle_count_order_id` |
+| `warehouse_bins` | `hasMany` | `cycle_count_items` | `bin_id` |
+| `items` | `hasMany` | `cycle_count_items` | `item_id` |
+| `material_lots` | `hasMany` | `cycle_count_items` | `material_lot_id` |
 
 ---
 

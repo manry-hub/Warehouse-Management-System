@@ -305,4 +305,97 @@ class InventoryMovementService
             ]);
         });
     }
+
+    /**
+     * Record an inventory cycle count adjustment.
+     * Positive variance: stock surplus (null -> destinationBin).
+     * Negative variance: stock shortage/shrinkage (sourceBin -> null).
+     * Zero variance: no movement recorded, returns null.
+     */
+    public function recordAdjustment(
+        WarehouseBin $bin,
+        Item $item,
+        MaterialLot $lot,
+        float $varianceQuantity,
+        string $referenceId,
+        ?User $user = null,
+        ?string $notes = null
+    ): ?InventoryMovement {
+        if (abs($varianceQuantity) < 0.0001) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($bin, $item, $lot, $varianceQuantity, $referenceId, $user, $notes) {
+            if ($varianceQuantity > 0) {
+                // Surplus: add inventory to bin
+                $balance = InventoryBalance::where('bin_id', $bin->id)
+                    ->where('item_id', $item->id)
+                    ->where('material_lot_id', $lot->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $balance) {
+                    $balance = new InventoryBalance([
+                        'bin_id' => $bin->id,
+                        'item_id' => $item->id,
+                        'material_lot_id' => $lot->id,
+                        'quantity_on_hand' => 0,
+                        'quantity_reserved' => 0,
+                    ]);
+                }
+
+                $balance->quantity_on_hand = (float) $balance->quantity_on_hand + $varianceQuantity;
+                $balance->save();
+
+                return InventoryMovement::create([
+                    'transaction_uuid' => (string) Str::uuid(),
+                    'movement_type' => InventoryMovement::TYPE_ADJUSTMENT,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'source_bin_id' => null,
+                    'destination_bin_id' => $bin->id,
+                    'quantity' => $varianceQuantity,
+                    'uom' => $item->unit_of_measure,
+                    'reference_type' => 'CYCLE_COUNT_ORDER',
+                    'reference_id' => $referenceId,
+                    'user_id' => $user?->id,
+                    'notes' => $notes ?? sprintf('Inventory surplus adjustment (+%.3f %s)', $varianceQuantity, $item->unit_of_measure),
+                ]);
+            } else {
+                // Shortage: deduct inventory from bin
+                $decrementQty = abs($varianceQuantity);
+
+                $balance = InventoryBalance::where('bin_id', $bin->id)
+                    ->where('item_id', $item->id)
+                    ->where('material_lot_id', $lot->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $balance || (float) $balance->quantity_on_hand < $decrementQty) {
+                    $current = $balance ? (float) $balance->quantity_on_hand : 0;
+                    throw new InsufficientStockException(
+                        "Cannot record negative adjustment: bin {$bin->bin_code} has {$current} {$item->unit_of_measure}, needed {$decrementQty}."
+                    );
+                }
+
+                $balance->quantity_on_hand = (float) $balance->quantity_on_hand - $decrementQty;
+                $balance->save();
+
+                return InventoryMovement::create([
+                    'transaction_uuid' => (string) Str::uuid(),
+                    'movement_type' => InventoryMovement::TYPE_ADJUSTMENT,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'source_bin_id' => $bin->id,
+                    'destination_bin_id' => null,
+                    'quantity' => $decrementQty,
+                    'uom' => $item->unit_of_measure,
+                    'reference_type' => 'CYCLE_COUNT_ORDER',
+                    'reference_id' => $referenceId,
+                    'user_id' => $user?->id,
+                    'notes' => $notes ?? sprintf('Inventory shortage adjustment (-%.3f %s)', $decrementQty, $item->unit_of_measure),
+                ]);
+            }
+        });
+    }
 }

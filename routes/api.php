@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MesWebhookController;
 use App\Http\Controllers\Api\ScannerAuthController;
+use App\Http\Controllers\Api\ScannerCycleCountController;
 use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
 use App\Http\Controllers\Api\ScannerShippingController;
@@ -25,6 +26,11 @@ Route::prefix('v1')->group(function () {
 
         // Outbound Truck Loading
         Route::post('/shipping/scan-truck', [ScannerShippingController::class, 'scanTruckCarton']);
+
+        // Stock Opname & Blind Cycle Counting
+        Route::get('/cycle-counts/active', [ScannerCycleCountController::class, 'activeOrders']);
+        Route::get('/cycle-counts/{id}/sheet', [ScannerCycleCountController::class, 'countSheet']);
+        Route::post('/cycle-counts/{id}/count', [ScannerCycleCountController::class, 'recordCount']);
     });
 
     // Inbound MES Integration Webhook (secured by HMAC SHA-256)
