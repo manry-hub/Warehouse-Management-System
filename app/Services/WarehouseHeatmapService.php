@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Warehouse;
 use App\Models\WarehouseBin;
 use App\Models\WarehouseZone;
 
@@ -18,6 +19,87 @@ class WarehouseHeatmapService
     public const STATUS_BLOCKED = 'BLOCKED';
 
     public const STATUS_QUARANTINE = 'QUARANTINE';
+
+    /**
+     * Compute warehouse-level aggregated capacity KPIs across all zones.
+     */
+    public function getWarehouseMetrics(Warehouse $warehouse): array
+    {
+        $bins = WarehouseBin::whereHas('zone', fn ($q) => $q->where('warehouse_id', $warehouse->id))
+            ->with(['balances'])
+            ->get();
+
+        $totalBins = $bins->count();
+        $occupiedBins = 0;
+        $blockedBins = 0;
+        $totalMaxWeightKg = 0.0;
+        $totalStoredWeightKg = 0.0;
+
+        foreach ($bins as $bin) {
+            $binStoredWeight = (float) $bin->balances->sum('quantity_on_hand');
+            $maxWeight = (float) $bin->max_weight_kg;
+
+            $totalMaxWeightKg += $maxWeight;
+            $totalStoredWeightKg += $binStoredWeight;
+
+            if ($bin->is_blocked) {
+                $blockedBins++;
+            }
+
+            if ($binStoredWeight > 0.0) {
+                $occupiedBins++;
+            }
+        }
+
+        $emptyBins = max(0, $totalBins - $occupiedBins);
+        $occupancyRate = $totalBins > 0 ? round(($occupiedBins / $totalBins) * 100, 1) : 0.0;
+        $weightUtilization = $totalMaxWeightKg > 0 ? round(($totalStoredWeightKg / $totalMaxWeightKg) * 100, 1) : 0.0;
+        $availableHeadroomKg = max(0.0, $totalMaxWeightKg - $totalStoredWeightKg);
+
+        return [
+            'total_bins' => $totalBins,
+            'occupied_bins' => $occupiedBins,
+            'empty_bins' => $emptyBins,
+            'blocked_bins' => $blockedBins,
+            'occupancy_rate_pct' => $occupancyRate,
+            'weight_utilization_pct' => $weightUtilization,
+            'total_max_weight_kg' => round($totalMaxWeightKg, 2),
+            'total_stored_weight_kg' => round($totalStoredWeightKg, 2),
+            'available_headroom_kg' => round($availableHeadroomKg, 2),
+        ];
+    }
+
+    /**
+     * Compute entire warehouse topology grouped by zones and aisles.
+     */
+    public function getWarehouseTopology(Warehouse $warehouse, array $filters = []): array
+    {
+        $zones = WarehouseZone::where('warehouse_id', $warehouse->id)
+            ->orderBy('code')
+            ->get();
+
+        $result = [];
+
+        foreach ($zones as $zone) {
+            $aisles = $this->getZoneTopology($zone, $filters);
+            if (empty($aisles)) {
+                continue;
+            }
+
+            $zoneMetrics = $this->getZoneMetrics($zone);
+
+            $result[] = [
+                'zone_id' => $zone->id,
+                'zone_code' => $zone->code,
+                'zone_name' => $zone->name,
+                'zone_type' => $zone->zone_type,
+                'metrics' => $zoneMetrics,
+                'aisles' => $aisles,
+            ];
+        }
+
+        return $result;
+    }
 
     /**
      * Compute zone-level aggregated capacity KPIs.

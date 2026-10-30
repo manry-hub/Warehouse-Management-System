@@ -1,13 +1,85 @@
 <x-filament-panels::page>
-    <div class="space-y-6" style="color: #f4f4f5;">
-        {{-- Control Toolbar & Filter Bar --}}
-        <div style="background-color: #18181b; border-radius: 0.875rem; padding: 1.25rem; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.35rem;">
-                        Warehouse
+    @php
+        $getBinStyle = function (array $bin): array {
+            $fill = (float) $bin['fill_percentage'];
+            $isBlocked = (bool) $bin['is_blocked'];
+            $isQuarantine = (bool) $bin['is_quarantine'];
+
+            if ($isBlocked) {
+                return [
+                    'style' => 'background-color: #7e22ce; color: #ffffff; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.35); color: #ffffff;',
+                    'label' => 'LOCKED',
+                    'is_empty' => false,
+                ];
+            }
+            if ($isQuarantine) {
+                return [
+                    'style' => 'background-color: #b45309; color: #ffffff; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.35); color: #ffffff;',
+                    'label' => 'QA HOLD',
+                    'is_empty' => false,
+                ];
+            }
+            if ($fill <= 0) {
+                return [
+                    'style' => 'background-color: #27272a; color: #71717a; border: none;',
+                    'badge_style' => 'background-color: rgba(255,255,255,0.06); color: #71717a;',
+                    'label' => 'EMPTY',
+                    'is_empty' => true,
+                ];
+            }
+            if ($fill <= 25) {
+                return [
+                    'style' => 'background-color: #059669; color: #ffffff; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.25); color: #ffffff;',
+                    'label' => $bin['fill_percentage'] . '%',
+                    'is_empty' => false,
+                ];
+            }
+            if ($fill <= 50) {
+                return [
+                    'style' => 'background-color: #10b981; color: #022c22; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.18); color: #022c22;',
+                    'label' => $bin['fill_percentage'] . '%',
+                    'is_empty' => false,
+                ];
+            }
+            if ($fill <= 70) {
+                return [
+                    'style' => 'background-color: #facc15; color: #422006; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.18); color: #422006;',
+                    'label' => $bin['fill_percentage'] . '%',
+                    'is_empty' => false,
+                ];
+            }
+            if ($fill <= 85) {
+                return [
+                    'style' => 'background-color: #f97316; color: #ffffff; border: none;',
+                    'badge_style' => 'background-color: rgba(0,0,0,0.25); color: #ffffff;',
+                    'label' => $bin['fill_percentage'] . '%',
+                    'is_empty' => false,
+                ];
+            }
+            return [
+                'style' => 'background-color: #ef4444; color: #ffffff; border: none; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);',
+                'badge_style' => 'background-color: rgba(0,0,0,0.3); color: #ffffff;',
+                'label' => $bin['fill_percentage'] . '%',
+                'is_empty' => false,
+            ];
+        };
+    @endphp
+
+    <div class="space-y-6">
+        {{-- Warehouse Selector Toolbar (Border-free) --}}
+        <x-filament::section class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div class="max-w-md w-full">
+                    <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-2 text-sm font-semibold leading-6 text-gray-950 dark:text-white mb-1.5">
+                        <x-filament::icon icon="heroicon-m-building-office-2" class="w-4 h-4 text-amber-500" />
+                        Selected Warehouse Facility
                     </label>
-                    <x-filament::input.wrapper>
+                    <x-filament::input.wrapper class="!ring-0 !border-0">
                         <x-filament::input.select wire:model.live="selectedWarehouseId">
                             @foreach ($this->warehouses as $wh)
                                 <option value="{{ $wh->id }}">{{ $wh->code }} — {{ $wh->name }}</option>
@@ -16,274 +88,320 @@
                     </x-filament::input.wrapper>
                 </div>
 
-                <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.35rem;">
-                        Zone Area
-                    </label>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="selectedZoneId">
-                            @foreach ($this->zones as $zone)
-                                <option value="{{ $zone->id }}">{{ $zone->code }} ({{ $zone->name }})</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.35rem;">
-                        Search SKU / Lot
-                    </label>
-                    <x-filament::input.wrapper>
-                        <x-filament::input type="text" wire:model.live.debounce.300ms="filterSku" placeholder="e.g. PP-HOMO, LOT-..." />
-                    </x-filament::input.wrapper>
-                </div>
-
                 <div class="flex items-center gap-2">
-                    <div class="flex-1">
-                        <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.35rem;">
-                            Occupancy Filter
-                        </label>
-                        <x-filament::input.wrapper>
-                            <x-filament::input.select wire:model.live="filterStatus">
-                                <option value="ALL">Show All Bins</option>
-                                <option value="OCCUPIED">Occupied Only (>0 kg)</option>
-                                <option value="EMPTY">Empty Only (0 kg)</option>
-                                <option value="OPTIMAL">Optimal (1% – 50%)</option>
-                                <option value="WARNING">Warning (51% – 85%)</option>
-                                <option value="CRITICAL">Critical (>85%)</option>
-                                <option value="BLOCKED">Blocked Only</option>
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
+                    <div class="inline-flex rounded-lg shadow-sm bg-gray-900 p-0.5 border-0 ring-0">
+                        <button
+                            type="button"
+                            wire:click="setViewMode('matrix')"
+                            class="px-3 py-1.5 text-xs font-bold rounded-md transition border-0 ring-0 {{ $viewMode === 'matrix' ? 'bg-amber-500 text-black shadow' : 'text-gray-400 hover:text-white' }}"
+                        >
+                            🗺️ Floor Plan Matrix
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="setViewMode('elevation')"
+                            class="px-3 py-1.5 text-xs font-bold rounded-md transition border-0 ring-0 {{ $viewMode === 'elevation' ? 'bg-amber-500 text-black shadow' : 'text-gray-400 hover:text-white' }}"
+                        >
+                            🏢 Rack Bay Elevation
+                        </button>
                     </div>
-
-                    @if ($filterSku || $filterStatus !== 'ALL')
-                        <x-filament::button color="gray" size="sm" wire:click="resetFilters" style="align-self: flex-end; margin-bottom: 2px;">
-                            Reset
-                        </x-filament::button>
-                    @endif
                 </div>
             </div>
-        </div>
+        </x-filament::section>
 
-        {{-- Zone KPI Summary Cards (Grayish fills, borderless) --}}
-        @if ($metrics = $this->zoneMetrics)
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Total Bins</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: #f4f4f5; margin-top: 0.25rem;">{{ $metrics['total_bins'] }}</div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">Configured slots</div>
-                </div>
-
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Occupancy</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: #34d399; margin-top: 0.25rem;">{{ $metrics['occupancy_rate_pct'] }}%</div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">{{ $metrics['occupied_bins'] }} / {{ $metrics['total_bins'] }} occupied</div>
-                </div>
-
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Weight Utilization</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; margin-top: 0.25rem; color: @if($metrics['weight_utilization_pct'] > 85) #fb7185 @elseif($metrics['weight_utilization_pct'] > 50) #fbbf24 @else #60a5fa @endif;">
-                        {{ $metrics['weight_utilization_pct'] }}%
-                    </div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">Of total payload cap</div>
-                </div>
-
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Stored Weight</div>
-                    <div style="font-size: 1.35rem; font-weight: 800; color: #f4f4f5; margin-top: 0.35rem;">
-                        {{ number_format($metrics['total_stored_weight_kg'], 1) }} <span style="font-size: 0.75rem; font-weight: 400; color: #a1a1aa;">kg</span>
-                    </div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">Cap: {{ number_format($metrics['total_max_weight_kg'], 0) }} kg</div>
-                </div>
-
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Free Headroom</div>
-                    <div style="font-size: 1.35rem; font-weight: 800; color: #34d399; margin-top: 0.35rem;">
-                        {{ number_format($metrics['available_headroom_kg'], 1) }} <span style="font-size: 0.75rem; font-weight: 400; color: #a1a1aa;">kg</span>
-                    </div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">{{ $metrics['empty_bins'] }} slots fully empty</div>
-                </div>
-
-                <div style="background-color: #1e1e24; border-radius: 0.75rem; padding: 1rem; border: none;">
-                    <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa;">Blocked Slots</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; margin-top: 0.25rem; color: @if($metrics['blocked_bins'] > 0) #c084fc @else #71717a @endif;">
-                        {{ $metrics['blocked_bins'] }}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #71717a; margin-top: 0.25rem;">Locked from picking</div>
-                </div>
+        {{-- Facility KPI Summary Cards via Native Filament Stat Components --}}
+        @if ($stats = $this->getStats())
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                @foreach ($stats as $stat)
+                    {{ $stat }}
+                @endforeach
             </div>
         @endif
 
-        {{-- Heatmap Legend Bar (Grayish fill, borderless) --}}
-        <div style="background-color: #18181b; border-radius: 0.75rem; padding: 0.75rem 1rem; border: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.75rem;">
-            <span style="color: #a1a1aa; text-transform: uppercase; font-size: 0.65rem; font-weight: 700; margin-right: 0.5rem;">Legend:</span>
-            <span style="background-color: #27272a; color: #d4d4d8; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #71717a;"></span> Empty (0%)
-            </span>
-            <span style="background-color: rgba(6, 78, 59, 0.7); color: #6ee7b7; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #10b981;"></span> Optimal (1% – 50%)
-            </span>
-            <span style="background-color: rgba(120, 53, 15, 0.7); color: #fde68a; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #f59e0b;"></span> Warning (51% – 85%)
-            </span>
-            <span style="background-color: rgba(159, 18, 57, 0.8); color: #fecdd3; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #f43f5e;"></span> Critical (>85%)
-            </span>
-            <span style="background-color: rgba(88, 28, 135, 0.7); color: #e9d5ff; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #a855f7;"></span> Blocked
-            </span>
-            <span style="background-color: rgba(113, 63, 18, 0.7); color: #fef08a; padding: 0.3rem 0.65rem; border-radius: 0.375rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #eab308;"></span> Quarantine / QA Hold
-            </span>
-        </div>
-
-        {{-- 2D Visual Rack Grid Layout --}}
-        @php $topology = $this->topology; @endphp
-
-        @if (empty($topology))
-            <div style="background-color: #18181b; border-radius: 1rem; padding: 3rem; text-align: center; border: none;">
-                <svg class="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <h3 style="margin-top: 0.75rem; font-size: 0.875rem; font-weight: 600; color: #e4e4e7;">No Bins Found</h3>
-                <p style="margin-top: 0.25rem; font-size: 0.8rem; color: #a1a1aa;">No storage locations match your current zone or filter criteria.</p>
+        {{-- Heatmap Thermal Gradient Legend Bar (Real Vivid Heatmap Palette, Seamless Borderless) --}}
+        <x-filament::section compact class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">
+                    Heatmap Scale:
+                </span>
+                <span style="background-color: #27272a; color: #a1a1aa;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-gray-400"></span> Empty (0%)
+                </span>
+                <span style="background-color: #059669; color: #ffffff;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-white"></span> Low (1% – 25%)
+                </span>
+                <span style="background-color: #10b981; color: #022c22;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-black"></span> Optimal (26% – 50%)
+                </span>
+                <span style="background-color: #facc15; color: #422006;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-amber-950"></span> Moderate (51% – 70%)
+                </span>
+                <span style="background-color: #f97316; color: #ffffff;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-white"></span> High (71% – 85%)
+                </span>
+                <span style="background-color: #ef4444; color: #ffffff;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-black shadow-md inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-white"></span> Critical (>85%)
+                </span>
+                <span style="background-color: #7e22ce; color: #ffffff;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-white"></span> Blocked / Locked
+                </span>
+                <span style="background-color: #b45309; color: #ffffff;" class="px-2.5 py-1 rounded-md font-mono text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 border-0">
+                    <span class="w-2 h-2 rounded-full bg-white"></span> Quarantine / QA Hold
+                </span>
             </div>
+        </x-filament::section>
+
+        {{-- Entire Warehouse Heatmap Topology (All Zones Rendered) --}}
+        @php $zonesTopology = $this->warehouseTopology; @endphp
+
+        @if (empty($zonesTopology))
+            <x-filament::section class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0">
+                <div class="text-center py-12">
+                    <x-filament::icon icon="heroicon-o-squares-2x2" class="mx-auto h-12 w-12 text-gray-500" />
+                    <h3 class="mt-3 text-sm font-semibold text-gray-200">No Storage Bins in Warehouse</h3>
+                    <p class="mt-1 text-sm text-gray-400">This warehouse facility has no configured zones or storage bins.</p>
+                </div>
+            </x-filament::section>
         @else
             <div class="space-y-8">
-                @foreach ($topology as $aisleKey => $aisleData)
-                    <div style="background-color: #141417; border-radius: 1rem; padding: 1.25rem; border: none; margin-bottom: 1.5rem;">
-                        {{-- Aisle Header --}}
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.75rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                                    Aisle {{ $aisleKey }}
+                @foreach ($zonesTopology as $zoneData)
+                    <div class="space-y-4 rounded-2xl bg-gray-950/60 p-5 border-0 ring-0">
+                        {{-- Zone Sector Header --}}
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-800/60 gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="font-mono text-sm font-black text-amber-400 px-3 py-1 rounded-lg bg-amber-500/15 border-0">
+                                    {{ $zoneData['zone_code'] }}
                                 </span>
-                                <span style="font-size: 0.75rem; color: #71717a;">
-                                    {{ count($aisleData['racks']) }} Rack Bay(s)
-                                </span>
+                                <div>
+                                    <h2 class="text-base font-extrabold text-white tracking-wide">
+                                        {{ $zoneData['zone_name'] }}
+                                    </h2>
+                                    <p class="text-xs text-gray-400 font-mono mt-0.5">
+                                        {{ $zoneData['metrics']['occupied_bins'] }} of {{ $zoneData['metrics']['total_bins'] }} Bins Occupied &bull; 
+                                        {{ $zoneData['metrics']['occupancy_rate_pct'] }}% Occupancy &bull; 
+                                        {{ number_format($zoneData['metrics']['total_stored_weight_kg'], 1) }} kg Stored
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <x-filament::badge :color="match($zoneData['zone_type']) {
+                                    'FINISHED_GOODS' => 'success',
+                                    'RAW_MATERIALS' => 'primary',
+                                    'QUARANTINE' => 'warning',
+                                    'STAGING' => 'info',
+                                    'SILO' => 'purple',
+                                    default => 'gray',
+                                }">
+                                    {{ $zoneData['zone_type'] }}
+                                </x-filament::badge>
                             </div>
                         </div>
 
-                        {{-- Racks in Aisle --}}
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            @foreach ($aisleData['racks'] as $rackKey => $rackData)
-                                <div style="background-color: #1a1a1f; border-radius: 0.75rem; padding: 1rem; border: none; display: flex; flex-col; justify-content: space-between;">
-                                    {{-- Rack Bay Header --}}
-                                    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
-                                        <div style="font-size: 0.75rem; font-weight: 700; color: #f4f4f5; text-transform: uppercase;">
-                                            Bay {{ $rackKey }}
-                                        </div>
-                                        <div style="font-size: 0.65rem; color: #71717a; font-family: monospace;">
-                                            Aisle {{ $aisleKey }} / Rack {{ $rackKey }}
-                                        </div>
-                                    </div>
+                        {{-- Zone Aisles & Racks Grid --}}
+                        @if ($viewMode === 'matrix')
+                            {{-- MODE A: 2D Spatial Floor Plan Matrix (Like Image 1 reference) --}}
+                            <div class="space-y-6 pt-1">
+                                @foreach ($zoneData['aisles'] as $aisleKey => $aisleData)
+                                    <x-filament::section
+                                        class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0"
+                                        :heading="'Aisle ' . $aisleKey . ' — Floor Matrix'"
+                                        :description="count($aisleData['racks']) . ' Rack Bay Lane(s)'"
+                                    >
+                                        <x-slot name="headerEnd">
+                                            <x-filament::badge color="primary">
+                                                Lane {{ $aisleKey }}
+                                            </x-filament::badge>
+                                        </x-slot>
 
-                                    {{-- Vertical Shelves (Top to Bottom) --}}
-                                    <div class="space-y-3" style="width: 100%;">
-                                        @foreach ($rackData['shelves'] as $shelfKey => $shelfData)
-                                            <div style="background-color: #222228; border-radius: 0.5rem; padding: 0.75rem; border: none; margin-bottom: 0.75rem;">
-                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-                                                    <span style="font-size: 0.65rem; font-weight: 700; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.05em;">
-                                                        Tier {{ $shelfKey }}
-                                                    </span>
-                                                </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-2">
+                                            @foreach ($aisleData['racks'] as $rackKey => $rackData)
+                                                <div class="rounded-xl bg-gray-900/80 p-3.5 space-y-3 border-0 ring-0">
+                                                    <div class="flex items-center justify-between border-b border-gray-800/40 pb-2">
+                                                        <span class="font-bold text-xs uppercase text-gray-200 tracking-wider">
+                                                            Bay {{ $rackKey }}
+                                                        </span>
+                                                        <span class="font-mono text-[10px] text-gray-500">
+                                                            Aisle {{ $aisleKey }} / Rack {{ $rackKey }}
+                                                        </span>
+                                                    </div>
 
-                                                {{-- Bins in Shelf (Grayish / Tinted Fills, No Harsh Border) --}}
-                                                <div class="grid grid-cols-2 gap-2">
-                                                    @foreach ($shelfData['bins'] as $bin)
-                                                        @php
-                                                            $status = $bin['status'];
-                                                            $cardBg = match($status) {
-                                                                'EMPTY' => '#27272f',
-                                                                'OPTIMAL' => 'rgba(6, 78, 59, 0.55)',
-                                                                'WARNING' => 'rgba(120, 53, 15, 0.55)',
-                                                                'CRITICAL' => 'rgba(159, 18, 57, 0.65)',
-                                                                'BLOCKED' => 'rgba(88, 28, 135, 0.55)',
-                                                                'QUARANTINE' => 'rgba(113, 63, 18, 0.55)',
-                                                                default => '#27272f'
-                                                            };
-
-                                                            $textColor = match($status) {
-                                                                'EMPTY' => '#d4d4d8',
-                                                                'OPTIMAL' => '#a7f3d0',
-                                                                'WARNING' => '#fde68a',
-                                                                'CRITICAL' => '#fecdd3',
-                                                                'BLOCKED' => '#e9d5ff',
-                                                                'QUARANTINE' => '#fef08a',
-                                                                default => '#d4d4d8'
-                                                            };
-
-                                                            $badgeBg = match($status) {
-                                                                'EMPTY' => '#3f3f46',
-                                                                'OPTIMAL' => '#065f46',
-                                                                'WARNING' => '#92400e',
-                                                                'CRITICAL' => '#e11d48',
-                                                                'BLOCKED' => '#6b21a8',
-                                                                'QUARANTINE' => '#854d0e',
-                                                                default => '#3f3f46'
-                                                            };
-                                                        @endphp
-
-                                                        <div wire:click="selectBin('{{ $bin['id'] }}')"
-                                                             style="background-color: {{ $cardBg }}; color: {{ $textColor }}; border-radius: 0.5rem; padding: 0.75rem; border: none; cursor: pointer; transition: transform 0.15s ease; @if($selectedBinId === $bin['id']) outline: 2px solid #f59e0b; @endif"
-                                                             class="hover:-translate-y-0.5">
-                                                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                                <span style="font-family: monospace; font-weight: 800; font-size: 0.75rem; color: #f4f4f5;">{{ $bin['bin_code'] }}</span>
-                                                                <span style="font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 0.25rem; background-color: {{ $badgeBg }}; color: #ffffff;">
-                                                                    @if ($status === 'BLOCKED')
-                                                                        LOCKED
-                                                                    @elseif ($status === 'EMPTY')
-                                                                        EMPTY
-                                                                    @else
-                                                                        {{ $bin['fill_percentage'] }}%
-                                                                    @endif
-                                                                </span>
-                                                            </div>
-
-                                                            {{-- Weight & Progress Meter --}}
-                                                            <div style="margin-top: 0.5rem;">
-                                                                <div style="width: 100%; background-color: #18181b; height: 5px; border-radius: 9999px; overflow: hidden;">
-                                                                    <div style="height: 100%; border-radius: 9999px; width: {{ min(100, $bin['fill_percentage']) }}%; background-color: @if($status === 'CRITICAL') #f43f5e @elseif($status === 'WARNING') #f59e0b @elseif($status === 'OPTIMAL') #10b981 @elseif($status === 'BLOCKED') #a855f7 @else #71717a @endif;"></div>
+                                                    {{-- Vertical Shelves in Bay --}}
+                                                    <div class="space-y-2.5">
+                                                        @foreach ($rackData['shelves'] as $shelfKey => $shelfData)
+                                                            <div class="space-y-1">
+                                                                <div class="text-[10px] font-mono font-bold uppercase text-gray-400 px-0.5">
+                                                                    Tier {{ $shelfKey }}
                                                                 </div>
-                                                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; margin-top: 0.35rem; color: #a1a1aa; font-family: monospace;">
-                                                                    <span>{{ number_format($bin['stored_weight_kg'], 0) }} kg</span>
-                                                                    <span style="color: #71717a;">/ {{ number_format($bin['max_weight_kg'], 0) }} kg</span>
-                                                                </div>
-                                                            </div>
 
-                                                            {{-- SKU tags --}}
-                                                            @if (!empty($bin['active_skus']))
-                                                                <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                                                                    @foreach (array_slice($bin['active_skus'], 0, 2) as $sku)
-                                                                        <span style="font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.35rem; border-radius: 0.25rem; background-color: rgba(255,255,255,0.1); color: #f4f4f5; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                                            {{ $sku }}
-                                                                        </span>
+                                                                <div class="grid grid-cols-2 gap-2">
+                                                                    @foreach ($shelfData['bins'] as $bin)
+                                                                        @php $theme = $getBinStyle($bin); @endphp
+                                                                        <div
+                                                                            wire:click="selectBin('{{ $bin['id'] }}')"
+                                                                            style="{{ $theme['style'] }}"
+                                                                            class="cursor-pointer rounded-lg p-2.5 transition transform hover:scale-[1.03] hover:shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[95px] border-0 @if($selectedBinId === $bin['id']) ring-2 ring-amber-400 @else ring-0 @endif"
+                                                                        >
+                                                                            <div class="flex items-center justify-between gap-1">
+                                                                                <span class="font-mono font-bold text-[11px] tracking-tight">
+                                                                                    {{ $bin['bin_code'] }}
+                                                                                </span>
+                                                                                <span style="{{ $theme['badge_style'] }}" class="text-[9px] px-1 py-0.5 rounded font-mono font-bold border-0">
+                                                                                    {{ $theme['label'] }}
+                                                                                </span>
+                                                                            </div>
+
+                                                                            {{-- Center Big Value like Image 1 --}}
+                                                                            <div class="my-1 text-center">
+                                                                                @if (! $theme['is_empty'])
+                                                                                    <div class="text-lg font-black tracking-tight leading-none">
+                                                                                        {{ number_format($bin['stored_weight_kg'], 0) }} <span class="text-[10px] font-bold opacity-80">kg</span>
+                                                                                    </div>
+                                                                                    <div class="text-[9px] font-mono opacity-80 mt-0.5">
+                                                                                        of {{ number_format($bin['max_weight_kg'], 0) }} kg
+                                                                                    </div>
+                                                                                @else
+                                                                                    <div class="text-xs font-semibold opacity-60 py-1.5">
+                                                                                        0 kg
+                                                                                    </div>
+                                                                                @endif
+                                                                            </div>
+
+                                                                            {{-- Bottom SKU pills --}}
+                                                                            @if (!empty($bin['active_skus']))
+                                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                                    @foreach (array_slice($bin['active_skus'], 0, 1) as $sku)
+                                                                                        <span class="text-[9px] font-bold px-1 py-0.5 rounded bg-black/20 truncate max-w-full border-0">
+                                                                                            {{ $sku }}
+                                                                                        </span>
+                                                                                    @endforeach
+                                                                                    @if (count($bin['active_skus']) > 1)
+                                                                                        <span class="text-[9px] font-black opacity-80">+{{ count($bin['active_skus']) - 1 }}</span>
+                                                                                    @endif
+                                                                                </div>
+                                                                            @else
+                                                                                <div class="text-[9px] opacity-40 font-mono text-right">
+                                                                                    Pos {{ $bin['bin'] }}
+                                                                                </div>
+                                                                            @endif
+                                                                        </div>
                                                                     @endforeach
-                                                                    @if (count($bin['active_skus']) > 2)
-                                                                        <span style="font-size: 0.55rem; color: #a1a1aa; font-weight: 700; align-self: center;">+{{ count($bin['active_skus']) - 2 }}</span>
-                                                                    @endif
                                                                 </div>
-                                                            @endif
-                                                        </div>
-                                                    @endforeach
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
+                                            @endforeach
+                                        </div>
+                                    </x-filament::section>
+                                @endforeach
+                            </div>
+                        @else
+                            {{-- MODE B: Rack Bay Elevation View --}}
+                            <div class="space-y-6 pt-1">
+                                @foreach ($zoneData['aisles'] as $aisleKey => $aisleData)
+                                    <x-filament::section
+                                        collapsible
+                                        class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0"
+                                        :heading="'Aisle ' . $aisleKey"
+                                        :description="count($aisleData['racks']) . ' Rack Bay(s)'"
+                                    >
+                                        <x-slot name="headerEnd">
+                                            <x-filament::badge color="primary">
+                                                Aisle {{ $aisleKey }}
+                                            </x-filament::badge>
+                                        </x-slot>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-2">
+                                            @foreach ($aisleData['racks'] as $rackKey => $rackData)
+                                                <x-filament::section
+                                                    compact
+                                                    class="!ring-0 !border-0 shadow-none dark:!ring-0 dark:!border-0"
+                                                    :heading="'Bay ' . $rackKey"
+                                                    :description="'Aisle ' . $aisleKey . ' / Rack ' . $rackKey"
+                                                >
+                                                    <div class="space-y-4">
+                                                        @foreach ($rackData['shelves'] as $shelfKey => $shelfData)
+                                                            <div class="rounded-lg bg-gray-950/80 p-3 border-0 ring-0">
+                                                                <div class="flex items-center justify-between mb-2">
+                                                                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">
+                                                                        Tier {{ $shelfKey }}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div class="grid grid-cols-2 gap-3">
+                                                                    @foreach ($shelfData['bins'] as $bin)
+                                                                        @php $theme = $getBinStyle($bin); @endphp
+                                                                        <div
+                                                                            wire:click="selectBin('{{ $bin['id'] }}')"
+                                                                            style="{{ $theme['style'] }}"
+                                                                            class="cursor-pointer rounded-lg p-3 transition transform hover:scale-[1.02] hover:shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[110px] border-0 @if($selectedBinId === $bin['id']) ring-2 ring-amber-400 @else ring-0 @endif"
+                                                                        >
+                                                                            <div class="flex items-center justify-between gap-1 mb-1">
+                                                                                <span class="font-mono font-bold text-xs tracking-wider">
+                                                                                    {{ $bin['bin_code'] }}
+                                                                                </span>
+                                                                                <span style="{{ $theme['badge_style'] }}" class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border-0">
+                                                                                    {{ $theme['label'] }}
+                                                                                </span>
+                                                                            </div>
+
+                                                                            {{-- Center Big Value like Image 1 --}}
+                                                                            <div class="my-1.5 text-center">
+                                                                                @if (! $theme['is_empty'])
+                                                                                    <div class="text-xl font-black tracking-tight leading-none">
+                                                                                        {{ number_format($bin['stored_weight_kg'], 0) }} <span class="text-xs font-bold opacity-80">kg</span>
+                                                                                    </div>
+                                                                                    <div class="text-[10px] font-mono opacity-80 mt-0.5">
+                                                                                        of {{ number_format($bin['max_weight_kg'], 0) }} kg
+                                                                                    </div>
+                                                                                @else
+                                                                                    <div class="text-xs font-medium opacity-60 italic py-2">
+                                                                                        Available (0 kg)
+                                                                                    </div>
+                                                                                @endif
+                                                                            </div>
+
+                                                                            {{-- Bottom SKU pills --}}
+                                                                            @if (!empty($bin['active_skus']))
+                                                                                <div class="flex flex-wrap items-center gap-1 mt-1">
+                                                                                    @foreach (array_slice($bin['active_skus'], 0, 2) as $sku)
+                                                                                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 truncate max-w-[120px] border-0">
+                                                                                            {{ $sku }}
+                                                                                        </span>
+                                                                                    @endforeach
+                                                                                    @if (count($bin['active_skus']) > 2)
+                                                                                        <span class="text-[9px] font-black opacity-80">+{{ count($bin['active_skus']) - 2 }}</span>
+                                                                                    @endif
+                                                                                </div>
+                                                                            @else
+                                                                                <div class="text-[10px] opacity-40 font-mono text-right">
+                                                                                    Tier {{ $bin['shelf'] }} &bull; Pos {{ $bin['bin'] }}
+                                                                                </div>
+                                                                            @endif
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </x-filament::section>
+                                            @endforeach
+                                        </div>
+                                    </x-filament::section>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
         @endif
 
-        {{-- Slide-Over Bin Detail Drawer via Native Filament Modal Component --}}
+        {{-- Slide-Over Bin Detail Drawer (Modal completely borderless & dark) --}}
         <x-filament::modal id="bin-modal" slide-over width="lg" :close-by-clicking-away="true">
             @if ($activeBinDetails)
                 <x-slot name="heading">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-family: monospace; font-size: 1.25rem; font-weight: 800; color: #f4f4f5;">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-xl font-black text-white">
                             {{ $activeBinDetails['bin_code'] }}
                         </span>
                         <x-filament::badge :color="match($activeBinDetails['status']) {
@@ -291,7 +409,7 @@
                             'WARNING' => 'warning',
                             'CRITICAL' => 'danger',
                             'BLOCKED' => 'purple',
-                            'QUARANTINE' => 'warning',
+                            'QUARANTINE' => 'amber',
                             default => 'gray',
                         }">
                             {{ $activeBinDetails['status'] }}
@@ -300,120 +418,127 @@
                 </x-slot>
 
                 <x-slot name="description">
-                    <span style="color: #a1a1aa;">
+                    <span class="text-gray-400">
                         {{ $activeBinDetails['warehouse_code'] }} &bull; {{ $activeBinDetails['zone_name'] }}
                     </span>
                 </x-slot>
 
-                {{-- Modal Body Content --}}
-                <div class="space-y-6" style="padding-top: 0.5rem; color: #f4f4f5;">
+                {{-- Modal Body Content (Completely border-free, dark cards) --}}
+                <div class="space-y-5 pt-1">
                     {{-- Spatial Coordinates --}}
-                    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; text-align: center; padding: 0.75rem; background-color: #1e1e24; border-radius: 0.75rem; font-family: monospace; font-size: 0.75rem; border: none;">
-                        <div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #a1a1aa;">Aisle</div>
-                            <div style="font-weight: 700; color: #f4f4f5;">{{ $activeBinDetails['aisle'] }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #a1a1aa;">Rack</div>
-                            <div style="font-weight: 700; color: #f4f4f5;">{{ $activeBinDetails['rack'] }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #a1a1aa;">Shelf Tier</div>
-                            <div style="font-weight: 700; color: #f4f4f5;">{{ $activeBinDetails['shelf'] }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #a1a1aa;">Position</div>
-                            <div style="font-weight: 700; color: #f4f4f5;">{{ $activeBinDetails['bin'] }}</div>
+                    <div class="rounded-xl bg-gray-950/80 p-4 border-0 ring-0 space-y-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Spatial Coordinates</h4>
+                        <div class="grid grid-cols-4 gap-2 text-center font-mono text-xs">
+                            <div class="rounded-lg bg-gray-900 p-2.5 text-center border-0 ring-0">
+                                <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Aisle</div>
+                                <div class="font-black text-base text-white mt-0.5">{{ $activeBinDetails['aisle'] }}</div>
+                            </div>
+                            <div class="rounded-lg bg-gray-900 p-2.5 text-center border-0 ring-0">
+                                <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Rack</div>
+                                <div class="font-black text-base text-white mt-0.5">{{ $activeBinDetails['rack'] }}</div>
+                            </div>
+                            <div class="rounded-lg bg-gray-900 p-2.5 text-center border-0 ring-0">
+                                <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tier</div>
+                                <div class="font-black text-base text-white mt-0.5">{{ $activeBinDetails['shelf'] }}</div>
+                            </div>
+                            <div class="rounded-lg bg-gray-900 p-2.5 text-center border-0 ring-0">
+                                <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Position</div>
+                                <div class="font-black text-base text-white mt-0.5">{{ $activeBinDetails['bin'] }}</div>
+                            </div>
                         </div>
                     </div>
 
                     {{-- Capacity Progress Meter --}}
-                    <div style="padding: 1rem; background-color: #1e1e24; border-radius: 0.75rem; border: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">
-                            <span style="color: #d4d4d8;">Payload Weight Utilization</span>
-                            <span style="color: @if($activeBinDetails['fill_percentage'] > 85) #fb7185 @elseif($activeBinDetails['fill_percentage'] > 50) #fbbf24 @else #34d399 @endif; font-weight: 800;">
+                    <div class="rounded-xl bg-gray-950/80 p-4 border-0 ring-0 space-y-3">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <span class="text-gray-300">Payload Weight Utilization</span>
+                            <x-filament::badge :color="$activeBinDetails['fill_percentage'] > 85 ? 'danger' : ($activeBinDetails['fill_percentage'] > 50 ? 'warning' : 'success')">
                                 {{ $activeBinDetails['fill_percentage'] }}%
-                            </span>
+                            </x-filament::badge>
                         </div>
 
-                        <div style="width: 100%; background-color: #141417; height: 8px; border-radius: 9999px; overflow: hidden; margin-bottom: 0.75rem;">
-                            <div style="height: 100%; border-radius: 9999px; width: {{ min(100, $activeBinDetails['fill_percentage']) }}%; background-color: @if($activeBinDetails['fill_percentage'] > 85) #f43f5e @elseif($activeBinDetails['fill_percentage'] > 50) #f59e0b @else #10b981 @endif;"></div>
+                        <div class="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden border-0">
+                            <div
+                                class="h-full rounded-full @if($activeBinDetails['fill_percentage'] > 85) bg-danger-500 @elseif($activeBinDetails['fill_percentage'] > 50) bg-warning-500 @else bg-success-500 @endif"
+                                style="width: {{ min(100, $activeBinDetails['fill_percentage']) }}%"
+                            ></div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; font-size: 0.75rem; font-family: monospace;">
-                            <div>
-                                <span style="color: #71717a; display: block; font-size: 0.65rem;">Stored:</span>
-                                <span style="font-weight: 700; color: #f4f4f5;">{{ number_format($activeBinDetails['stored_weight_kg'], 1) }} kg</span>
+                        <div class="grid grid-cols-3 gap-2 text-xs font-mono pt-1 text-center">
+                            <div class="rounded-lg bg-gray-900 p-2 border-0 ring-0">
+                                <span class="text-gray-400 block text-[10px]">Stored:</span>
+                                <span class="font-bold text-white text-sm">{{ number_format($activeBinDetails['stored_weight_kg'], 1) }} kg</span>
                             </div>
-                            <div>
-                                <span style="color: #71717a; display: block; font-size: 0.65rem;">Max Cap:</span>
-                                <span style="font-weight: 700; color: #f4f4f5;">{{ number_format($activeBinDetails['max_weight_kg'], 0) }} kg</span>
+                            <div class="rounded-lg bg-gray-900 p-2 border-0 ring-0">
+                                <span class="text-gray-400 block text-[10px]">Max Cap:</span>
+                                <span class="font-bold text-white text-sm">{{ number_format($activeBinDetails['max_weight_kg'], 0) }} kg</span>
                             </div>
-                            <div>
-                                <span style="color: #71717a; display: block; font-size: 0.65rem;">Headroom:</span>
-                                <span style="font-weight: 700; color: #34d399;">{{ number_format($activeBinDetails['headroom_kg'], 1) }} kg</span>
+                            <div class="rounded-lg bg-gray-900 p-2 border-0 ring-0">
+                                <span class="text-gray-400 block text-[10px]">Headroom:</span>
+                                <span class="font-bold text-emerald-400 text-sm">{{ number_format($activeBinDetails['headroom_kg'], 1) }} kg</span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Stored Lots & Balances Table --}}
-                    <div class="space-y-3">
-                        <h3 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a1aa;">
+                    {{-- Stored Lots & Balances Table (Completely border-free, dark cards) --}}
+                    <div class="rounded-xl bg-gray-950/80 p-4 border-0 ring-0 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">
                             Stored Inventory Lots ({{ count($activeBinDetails['balances']) }})
-                        </h3>
+                        </h4>
 
                         @if (empty($activeBinDetails['balances']))
-                            <div style="padding: 1.5rem; text-align: center; background-color: #1e1e24; border-radius: 0.75rem; color: #71717a; font-size: 0.75rem; border: none;">
+                            <div class="text-center py-6 text-gray-400 text-xs italic">
                                 Bin is currently empty. No active inventory lots recorded.
                             </div>
                         @else
-                            <div class="space-y-2">
+                            <div class="space-y-3">
                                 @foreach ($activeBinDetails['balances'] as $balance)
-                                    <div style="padding: 0.85rem; background-color: #1e1e24; border-radius: 0.75rem; border: none; margin-bottom: 0.5rem;">
-                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                                    <div class="rounded-lg bg-gray-900 p-3.5 space-y-2.5 border-0 ring-0">
+                                        <div class="flex items-center justify-between gap-2">
                                             <div>
-                                                <span style="font-weight: 700; font-size: 0.8rem; color: #f4f4f5;">{{ $balance['item_sku'] }}</span>
-                                                <span style="font-size: 0.7rem; color: #a1a1aa; margin-left: 0.25rem;">({{ $balance['item_name'] }})</span>
+                                                <span class="font-bold text-sm text-white">{{ $balance['item_sku'] }}</span>
+                                                <span class="text-xs text-gray-400 ml-1">({{ $balance['item_name'] }})</span>
                                             </div>
-                                            <span style="font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 0.25rem;
-                                                @if($balance['status'] === 'AVAILABLE') background-color: rgba(6, 78, 59, 0.7); color: #6ee7b7;
-                                                @elseif($balance['status'] === 'QA_HOLD') background-color: rgba(120, 53, 15, 0.7); color: #fde68a;
-                                                @else background-color: rgba(159, 18, 57, 0.7); color: #fecdd3; @endif">
+                                            <x-filament::badge :color="match($balance['status']) {
+                                                'AVAILABLE' => 'success',
+                                                'QA_HOLD' => 'warning',
+                                                default => 'danger',
+                                            }" size="xs">
                                                 {{ $balance['status'] }}
-                                            </span>
+                                            </x-filament::badge>
                                         </div>
 
-                                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: #a1a1aa; font-family: monospace; margin-bottom: 0.5rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.35rem;">
-                                                <span>Lot: <strong style="color: #f4f4f5;">{{ $balance['lot_number'] }}</strong></span>
+                                        <div class="flex items-center justify-between text-xs font-mono text-gray-400">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span>Lot: <strong class="text-white">{{ $balance['lot_number'] }}</strong></span>
                                                 @if ($balance['lot_type'] === 'REGRIND')
-                                                    <span style="font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.35rem; background-color: rgba(19, 78, 74, 0.7); color: #5eead4; border-radius: 0.25rem;">
+                                                    <x-filament::badge color="info" size="xs">
                                                         REGRIND (Gen {{ $balance['regrind_generation'] }})
-                                                    </span>
+                                                    </x-filament::badge>
                                                     @if ($balance['regrind_machine'])
-                                                        <span style="font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.35rem; background-color: rgba(88, 28, 135, 0.7); color: #e9d5ff; border-radius: 0.25rem;">
+                                                        <x-filament::badge color="purple" size="xs">
                                                             {{ $balance['regrind_machine'] }}
-                                                        </span>
+                                                        </x-filament::badge>
                                                     @endif
                                                 @endif
                                             </div>
                                             @if ($balance['expiry_date'])
-                                                <span style="font-size: 0.65rem; color: #71717a;">Exp: {{ $balance['expiry_date'] }}</span>
+                                                <span class="text-[10px] text-gray-400">Exp: {{ $balance['expiry_date'] }}</span>
                                             @endif
                                         </div>
 
-                                        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.25rem; font-size: 0.75rem; font-family: monospace; padding-top: 0.35rem; border-top: 1px solid #27272a;">
+                                        <div class="grid grid-cols-3 gap-2 text-xs font-mono pt-2 border-t border-gray-800/40 text-center">
                                             <div>
-                                                <span style="font-size: 0.6rem; color: #71717a; display: block;">On Hand:</span>
-                                                <span style="font-weight: 700; color: #f4f4f5;">{{ number_format($balance['quantity_on_hand'], 1) }}</span>
+                                                <span class="text-[10px] text-gray-400 block">On Hand:</span>
+                                                <span class="font-bold text-white">{{ number_format($balance['quantity_on_hand'], 1) }}</span>
                                             </div>
                                             <div>
-                                                <span style="font-size: 0.6rem; color: #71717a; display: block;">Reserved:</span>
-                                                <span style="color: #fbbf24;">{{ number_format($balance['quantity_reserved'], 1) }}</span>
+                                                <span class="text-[10px] text-gray-400 block">Reserved:</span>
+                                                <span class="font-semibold text-amber-400">{{ number_format($balance['quantity_reserved'], 1) }}</span>
                                             </div>
                                             <div>
-                                                <span style="font-size: 0.6rem; color: #71717a; display: block;">Available:</span>
-                                                <span style="font-weight: 700; color: #34d399;">{{ number_format($balance['available_quantity'], 1) }}</span>
+                                                <span class="text-[10px] text-gray-400 block">Available:</span>
+                                                <span class="font-bold text-emerald-400">{{ number_format($balance['available_quantity'], 1) }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -425,9 +550,10 @@
 
                 {{-- Modal Footer Actions --}}
                 <x-slot name="footer">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%;">
+                    <div class="flex items-center justify-between gap-3 w-full">
                         <x-filament::button
                             :color="$activeBinDetails['is_blocked'] ? 'success' : 'danger'"
+                            :icon="$activeBinDetails['is_blocked'] ? 'heroicon-m-lock-open' : 'heroicon-m-lock-closed'"
                             wire:click="toggleBlocked('{{ $activeBinDetails['id'] }}')">
                             @if ($activeBinDetails['is_blocked'])
                                 Unblock Bin Slot

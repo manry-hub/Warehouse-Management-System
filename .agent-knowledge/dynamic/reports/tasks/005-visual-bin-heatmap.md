@@ -54,3 +54,12 @@ Key architectural features include:
 | 5 | Selecting a bin tile opens slide-over drawer displaying stored lots, regrind generations, and machine origin | Pass |
 | 6 | Toggling bin lock updates `is_blocked` in MariaDB, dispatches Filament notification, and updates UI | Pass |
 | 7 | Filament custom page `/admin/visual-heatmap` returns HTTP 200 for authenticated Warehouse Managers | Pass |
+
+## Revision (Heatmap Visual Overhaul & Warehouse-Level View)
+
+- Simplified navigation controls to filter solely per Warehouse facility, rendering all facility zones in a unified floor plan.
+- Overhauled heatmap color palette to vibrant solid thermal heat colors (0% dark gray, 1-25% emerald, 26-50% vivid green, 51-70% bright yellow, 71-85% orange, >85% fiery red, locked purple, quarantine amber) with bold centered numbers matching real warehouse floorplan blueprints.
+- Added 2D Floor Plan Matrix mode alongside Rack Bay Elevation mode.
+- Upgraded top summary metrics to native Filament 3.x `Stat::make()` widgets.
+- Removed all white borders, rings, and outlines (`!ring-0 !border-0`) across sections, cards, and modal elements.
+- Fixed dark-mode slide-over drawer white glare boxes on spatial coordinates and stored lots by using pure dark containers.

@@ -280,6 +280,21 @@ class WarehouseHeatmapTest extends TestCase
         $this->assertFalse($this->binNormal->fresh()->is_blocked);
     }
 
+    public function test_service_calculates_warehouse_level_metrics_and_topology(): void
+    {
+        /** @var WarehouseHeatmapService $service */
+        $service = app(WarehouseHeatmapService::class);
+
+        $metrics = $service->getWarehouseMetrics($this->warehouse);
+        $this->assertEquals(4, $metrics['total_bins']);
+        $this->assertEquals(2, $metrics['occupied_bins']);
+        $this->assertEquals(1, $metrics['blocked_bins']);
+
+        $topology = $service->getWarehouseTopology($this->warehouse);
+        $this->assertCount(1, $topology);
+        $this->assertEquals('ZONE-TEST-RM', $topology[0]['zone_code']);
+    }
+
     public function test_filament_heatmap_page_renders_successfully(): void
     {
         $response = $this->actingAs($this->manager)
@@ -308,6 +323,12 @@ class WarehouseHeatmapTest extends TestCase
             ->assertNotified()
             ->call('closeDrawer')
             ->assertSet('selectedBinId', null)
+            ->call('setViewMode', 'elevation')
+            ->assertSet('viewMode', 'elevation')
+            ->assertSee('TEST-A-01-11')
+            ->call('setViewMode', 'matrix')
+            ->assertSet('viewMode', 'matrix')
+            ->assertSee('TEST-A-01-11')
             ->set('filterStatus', 'BLOCKED')
             ->assertSee('TEST-A-01-22')
             ->assertDontSee('TEST-A-01-11');
