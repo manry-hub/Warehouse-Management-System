@@ -3,12 +3,12 @@
 namespace App\Jobs;
 
 use App\Models\IntegrationOutbox;
+use App\Services\MesGatewayService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProcessOutboxJob implements ShouldQueue
@@ -21,17 +21,16 @@ class ProcessOutboxJob implements ShouldQueue
         public ?int $outboxId = null
     ) {}
 
-    public function handle(): void
+    public function handle(?MesGatewayService $gatewayService = null): void
     {
+        $gatewayService ??= app(MesGatewayService::class);
+
         $query = IntegrationOutbox::where('status', IntegrationOutbox::STATUS_PENDING);
         if ($this->outboxId) {
             $query->where('id', $this->outboxId);
         }
 
         $pendingEvents = $query->limit(50)->get();
-
-        $mesBaseUrl = config('services.mes.base_url', env('MES_BASE_URL', 'http://127.0.0.1:3000'));
-        $mesToken = config('services.mes.integration_token', env('MES_INTEGRATION_TOKEN', 'test-integration-token'));
 
         foreach ($pendingEvents as $event) {
             $event->status = IntegrationOutbox::STATUS_PROCESSING;
@@ -40,18 +39,17 @@ class ProcessOutboxJob implements ShouldQueue
 
             try {
                 if ($event->event_type === 'materials.lot_dispatched') {
-                    $response = Http::withToken($mesToken)
-                        ->timeout(5)
-                        ->post("{$mesBaseUrl}/api/v1/materials/lots", $event->payload);
+                    $gatewayService->registerMaterialLot($event->payload);
 
-                    if ($response->successful()) {
-                        $event->status = IntegrationOutbox::STATUS_PROCESSED;
-                        $event->processed_at = now();
-                        $event->save();
-                        Log::info("MES Outbox dispatched event [{$event->event_uuid}] successfully.");
-                    } else {
-                        throw new \RuntimeException("MES API returned status {$response->status()}: ".$response->body());
-                    }
+                    $event->status = IntegrationOutbox::STATUS_PROCESSED;
+                    $event->processed_at = now();
+                    $event->save();
+                    Log::info("MES Outbox dispatched event [{$event->event_uuid}] successfully.");
+                } else {
+                    Log::warning("Unhandled outbox event type: [{$event->event_type}]");
+                    $event->status = IntegrationOutbox::STATUS_PROCESSED;
+                    $event->processed_at = now();
+                    $event->save();
                 }
             } catch (\Throwable $e) {
                 $event->last_error = $e->getMessage();

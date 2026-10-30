@@ -37,6 +37,8 @@ return [
 
     'mes' => [
         'base_url' => env('MES_BASE_URL', 'http://127.0.0.1:3000'),
+        'username' => env('MES_SERVICE_USERNAME', 'admin'),
+        'password' => env('MES_SERVICE_PASSWORD', 'password123'),
         'integration_token' => env('MES_INTEGRATION_TOKEN', 'test-integration-token'),
         'webhook_secret' => env('MES_WEBHOOK_SECRET', 'test-mes-secret-key'),
     ],

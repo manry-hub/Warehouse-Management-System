@@ -16,6 +16,22 @@ class MesOutboxTest extends TestCase
     public function test_process_outbox_job_dispatches_lot_to_mes(): void
     {
         Http::fake([
+            'http://127.0.0.1:3000/api/v1/auth/login' => Http::response([
+                'success' => true,
+                'data' => [
+                    'accessToken' => 'fake-jwt-token-xyz',
+                ],
+            ], 200),
+            'http://127.0.0.1:3000/api/v1/materials*' => Http::response([
+                'success' => true,
+                'data' => [
+                    [
+                        'id' => 'mat-uuid-1234',
+                        'code' => 'RAW-PP-INJ-503',
+                        'name' => 'Polypropylene Resin',
+                    ],
+                ],
+            ], 200),
             'http://127.0.0.1:3000/api/v1/materials/lots' => Http::response([
                 'success' => true,
                 'data' => [
@@ -46,7 +62,8 @@ class MesOutboxTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->url() === 'http://127.0.0.1:3000/api/v1/materials/lots'
                 && $request['lotNumber'] === 'LOT-PP-20261030-01'
-                && (float) $request['quantityKg'] === 250.0;
+                && (float) $request['initialQtyKg'] === 250.0
+                && $request['materialId'] === 'mat-uuid-1234';
         });
     }
 }

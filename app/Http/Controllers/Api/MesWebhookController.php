@@ -30,6 +30,9 @@ class MesWebhookController extends Controller
             'data.orderNumber' => 'required|string',
             'data.partNumber' => 'required|string',
             'data.quantityPacked' => 'required|numeric|min:1',
+            'data.machineId' => 'nullable|string',
+            'data.moldCode' => 'nullable|string',
+            'data.unitOfMeasure' => 'nullable|string',
         ]);
 
         $eventId = $validated['eventId'];
