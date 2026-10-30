@@ -182,6 +182,22 @@
                 <p class="text-[10px] text-gray-400 mt-0.5 leading-tight">Bulk to Pick-Face • Min-Max</p>
             </div>
         </a>
+
+        <!-- 11. Customer Returns Intake -->
+        <a href="{{ route('scanner.returns') }}" class="group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl active:scale-[0.97] transition-all shadow-md min-h-[125px] sm:min-h-[135px] bg-[#1e1e24] hover:bg-[#25252e] border border-rose-500/20 col-span-2 sm:col-span-1">
+            <div class="flex items-start justify-between">
+                <div class="w-11 h-11 rounded-xl text-rose-400 bg-rose-500/15 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                    </svg>
+                </div>
+                <span class="text-[9px] font-mono font-black text-rose-400 px-2 py-0.5 rounded bg-rose-950/60 border border-rose-800/40">MODE 11</span>
+            </div>
+            <div class="mt-3">
+                <h3 class="text-xs sm:text-sm font-bold text-rose-300 group-hover:text-rose-200 tracking-wide">Returns Dock</h3>
+                <p class="text-[10px] text-gray-400 mt-0.5 leading-tight">RMA Intake • Quarantine Staging</p>
+            </div>
+        </a>
     </div>
 
     <!-- Quick Audio Test Bar (Touch targets >= 44px) -->

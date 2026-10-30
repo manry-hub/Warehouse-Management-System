@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
 use App\Http\Controllers\Api\ScannerRegrindController;
 use App\Http\Controllers\Api\ScannerReplenishmentController;
+use App\Http\Controllers\Api\ScannerReturnsController;
 use App\Http\Controllers\Api\ScannerShippingController;
 use App\Http\Controllers\Api\SiloTelemetryController;
 use App\Http\Controllers\Api\TraceabilityController;
@@ -63,6 +64,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/cycle-counts/active', [ScannerCycleCountController::class, 'activeOrders']);
         Route::get('/cycle-counts/{id}/sheet', [ScannerCycleCountController::class, 'countSheet']);
         Route::post('/cycle-counts/{id}/count', [ScannerCycleCountController::class, 'recordCount']);
+
+        // Customer RMA Dock Intake & Quarantine Receiving
+        Route::get('/returns/pending', [ScannerReturnsController::class, 'pending']);
+        Route::post('/returns/receive-carton', [ScannerReturnsController::class, 'receiveCarton']);
     });
 
     // Lot Genealogy & Recall Traceability API

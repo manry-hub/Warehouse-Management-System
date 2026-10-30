@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerRma;
 use App\Models\CycleCountOrder;
 use App\Models\DeliveryOrder;
 use App\Models\Item;
@@ -222,5 +223,26 @@ class ScannerWebController extends Controller
             ->get();
 
         return view('scanner.modes.replenishment', compact('pendingTasks'));
+    }
+
+    /**
+     * Mode 11: Customer RMA Dock Intake & Quarantine Receiving.
+     */
+    public function returns(): View
+    {
+        $pendingRmas = CustomerRma::whereNotIn('status', [
+            CustomerRma::STATUS_RESOLVED,
+            CustomerRma::STATUS_CANCELLED,
+        ])
+            ->with(['items.item', 'deliveryOrder'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $quarantineBins = WarehouseBin::where('bin_code', 'like', '%QUARANTINE%')->get();
+        if ($quarantineBins->isEmpty()) {
+            $quarantineBins = WarehouseBin::limit(5)->get();
+        }
+
+        return view('scanner.modes.returns', compact('pendingRmas', 'quarantineBins'));
     }
 }

@@ -32,6 +32,12 @@ class InventoryMovement extends Model
 
     public const TYPE_REPLENISHMENT = 'REPLENISHMENT';
 
+    public const TYPE_CUSTOMER_RETURN = 'CUSTOMER_RETURN';
+
+    public const TYPE_RETURN_TO_VENDOR = 'RETURN_TO_VENDOR';
+
+    public const TYPE_SCRAP = 'SCRAP';
+
     protected $fillable = [
         'transaction_uuid',
         'movement_type',

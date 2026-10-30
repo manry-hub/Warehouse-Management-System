@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\CustomerRma;
 use App\Models\CycleCountOrder;
 use App\Models\DeliveryOrder;
 use App\Models\InventoryMovement;
@@ -11,6 +12,7 @@ use App\Models\PickingWave;
 use App\Models\QualityQuarantine;
 use App\Models\ReplenishmentTask;
 use App\Models\Silo;
+use App\Models\SupplierRtv;
 use App\Models\TransferOrder;
 use App\Models\WarehouseBin;
 use Filament\Widgets\Widget;
@@ -81,6 +83,18 @@ class ModuleLauncherWidget extends Widget
         ])->count();
         $totalReplenishments = ReplenishmentTask::count();
 
+        // 11. Customer RMA & Supplier RTV Returns
+        $pendingRmas = CustomerRma::whereNotIn('status', [
+            CustomerRma::STATUS_RESOLVED,
+            CustomerRma::STATUS_CANCELLED,
+        ])->count();
+        $totalRmas = CustomerRma::count();
+        $pendingRtvs = SupplierRtv::whereIn('status', [
+            SupplierRtv::STATUS_DRAFT,
+            SupplierRtv::STATUS_APPROVED,
+        ])->count();
+        $totalRtvs = SupplierRtv::count();
+
         return [
             'heatmap' => [
                 'total_bins' => $totalBins,
@@ -121,6 +135,12 @@ class ModuleLauncherWidget extends Widget
             'replenishments' => [
                 'pending' => $pendingReplenishments,
                 'total' => $totalReplenishments,
+            ],
+            'returns' => [
+                'pending_rmas' => $pendingRmas,
+                'total_rmas' => $totalRmas,
+                'pending_rtvs' => $pendingRtvs,
+                'total_rtvs' => $totalRtvs,
             ],
         ];
     }

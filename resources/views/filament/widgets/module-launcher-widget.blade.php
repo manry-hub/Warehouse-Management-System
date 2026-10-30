@@ -449,6 +449,42 @@
                 </div>
             </div>
 
+            {{-- 11. Returns Management: Customer RMA & Supplier RTV --}}
+            <div class="module-item-card">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2.5 rounded-lg bg-rose-500/10 text-rose-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                            </svg>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold font-mono bg-zinc-900 border border-zinc-800 text-rose-400">
+                            {{ $returns['pending_rmas'] ?? 0 }} PENDING RMAS
+                        </span>
+                    </div>
+                    <h3 class="text-base font-bold text-white tracking-tight">Returns & Defect Quarantine</h3>
+                    <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
+                        Customer RMA dock check-in, QA disposition (Restock, Regrind, Scrap), and supplier RTV debit memos.
+                    </p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                    <a href="/admin/customer-rmas" class="btn-launch-primary" style="background-color: #f43f5e; color: #ffffff;">
+                        <span>Manage RMAs &rarr;</span>
+                    </a>
+                    <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+                        <a href="/admin/supplier-rtvs" class="hover:text-amber-400 transition flex items-center gap-1">
+                            <span>Supplier RTVs</span>
+                            <span class="text-zinc-600">({{ $returns['pending_rtvs'] ?? 0 }})</span>
+                        </a>
+                        <span class="text-zinc-700">•</span>
+                        <a href="/scanner/returns" target="_blank" class="hover:text-rose-400 transition flex items-center gap-1">
+                            <span>Scanner Dock</span>
+                            <span class="text-zinc-600">↗</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </x-filament-widgets::widget>

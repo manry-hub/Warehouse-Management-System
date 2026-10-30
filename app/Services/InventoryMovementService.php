@@ -359,6 +359,158 @@ class InventoryMovementService
     }
 
     /**
+     * Record customer returned goods intake into quarantine buffer bin.
+     */
+    public function recordCustomerReturn(
+        Item $item,
+        ?MaterialLot $lot,
+        WarehouseBin $quarantineBin,
+        float $quantity,
+        string $rmaNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Return quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($item, $lot, $quarantineBin, $quantity, $rmaNumber, $user, $notes) {
+            $destBalance = InventoryBalance::where('bin_id', $quarantineBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot?->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $destBalance) {
+                $destBalance = new InventoryBalance([
+                    'bin_id' => $quarantineBin->id,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot?->id,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                ]);
+            }
+
+            $destBalance->quantity_on_hand = (float) $destBalance->quantity_on_hand + $quantity;
+            $destBalance->save();
+
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_CUSTOMER_RETURN,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot?->id,
+                'source_bin_id' => null,
+                'destination_bin_id' => $quarantineBin->id,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'CUSTOMER_RMA',
+                'reference_id' => $rmaNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Customer return received under RMA {$rmaNumber}",
+            ]);
+        });
+    }
+
+    /**
+     * Record supplier return to vendor (RTV) outbound debit.
+     */
+    public function recordReturnToVendor(
+        MaterialLot $lot,
+        WarehouseBin $sourceBin,
+        float $quantity,
+        string $rtvNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('RTV quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $sourceBin, $quantity, $rtvNumber, $user, $notes) {
+            $item = $lot->item;
+
+            $sourceBalance = InventoryBalance::where('bin_id', $sourceBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $sourceBalance || $sourceBalance->quantity_on_hand < $quantity) {
+                throw new InsufficientStockException("Insufficient stock in bin {$sourceBin->bin_code} for return-to-vendor dispatch.");
+            }
+
+            // Relieve any reservation
+            $reservedDeduction = min($sourceBalance->quantity_reserved, $quantity);
+            $sourceBalance->quantity_reserved = (float) $sourceBalance->quantity_reserved - $reservedDeduction;
+            $sourceBalance->quantity_on_hand = (float) $sourceBalance->quantity_on_hand - $quantity;
+            $sourceBalance->save();
+
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_RETURN_TO_VENDOR,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $sourceBin->id,
+                'destination_bin_id' => null,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'SUPPLIER_RTV',
+                'reference_id' => $rtvNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Supplier return dispatched under RTV {$rtvNumber}",
+            ]);
+        });
+    }
+
+    /**
+     * Record scrap write-off.
+     */
+    public function recordScrap(
+        MaterialLot $lot,
+        WarehouseBin $sourceBin,
+        float $quantity,
+        string $referenceNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Scrap quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $sourceBin, $quantity, $referenceNumber, $user, $notes) {
+            $item = $lot->item;
+
+            $sourceBalance = InventoryBalance::where('bin_id', $sourceBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $sourceBalance || $sourceBalance->quantity_on_hand < $quantity) {
+                throw new InsufficientStockException("Insufficient stock in bin {$sourceBin->bin_code} for scrap write-off.");
+            }
+
+            $sourceBalance->quantity_on_hand = (float) $sourceBalance->quantity_on_hand - $quantity;
+            $sourceBalance->save();
+
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_SCRAP,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $sourceBin->id,
+                'destination_bin_id' => null,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'SCRAP_DISPOSITION',
+                'reference_id' => $referenceNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Scrapped under reference {$referenceNumber}",
+            ]);
+        });
+    }
+
+    /**
      * Record finished goods intake from packaging station.
      */
     public function recordFinishedGoodsIntake(
