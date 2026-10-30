@@ -485,6 +485,35 @@
                 </div>
             </div>
 
+            {{-- 12. Executive Analytics & Compliance Center --}}
+            <div class="module-item-card">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold font-mono bg-zinc-900 border border-zinc-800 text-emerald-400">
+                            {{ $analytics['ira_percentage'] ?? 100 }}% IRA ACCURACY
+                        </span>
+                    </div>
+                    <h3 class="text-base font-bold text-white tracking-tight">Executive Analytics & IRA</h3>
+                    <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
+                        Resin shelf-life aging degradation, cycle count net shrinkage, ABC movement velocity, and CSV exports.
+                    </p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                    <a href="/admin/executive-analytics" class="btn-launch-primary" style="background-color: #10b981; color: #022c22;">
+                        <span>Open Analytics Cockpit &rarr;</span>
+                    </a>
+                    <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+                        <span class="text-zinc-400">Aging Risk (90d+):</span>
+                        <span class="text-rose-400 font-bold">{{ number_format($analytics['critical_aging_kg'] ?? 0, 0) }} kg</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </x-filament-widgets::widget>

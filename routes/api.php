@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ScannerReturnsController;
 use App\Http\Controllers\Api\ScannerShippingController;
 use App\Http\Controllers\Api\SiloTelemetryController;
 use App\Http\Controllers\Api\TraceabilityController;
+use App\Http\Controllers\Api\WarehouseAnalyticsController;
 use App\Http\Middleware\VerifyMesWebhookSignature;
 use App\Http\Middleware\VerifySiloTelemetryApiKey;
 use Illuminate\Support\Facades\Route;
@@ -87,4 +88,8 @@ Route::prefix('v1')->group(function () {
     // Silo Telemetry Ingestion (secured by X-Telemetry-Key or Sanctum)
     Route::post('/telemetry/silo-reading', [SiloTelemetryController::class, 'store'])
         ->middleware(VerifySiloTelemetryApiKey::class);
+
+    // Executive Warehouse Analytics & Compliance API
+    Route::get('/analytics/summary', [WarehouseAnalyticsController::class, 'summary'])
+        ->middleware('auth:sanctum');
 });

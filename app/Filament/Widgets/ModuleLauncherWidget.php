@@ -15,6 +15,7 @@ use App\Models\Silo;
 use App\Models\SupplierRtv;
 use App\Models\TransferOrder;
 use App\Models\WarehouseBin;
+use App\Services\WarehouseAnalyticsService;
 use Filament\Widgets\Widget;
 
 class ModuleLauncherWidget extends Widget
@@ -95,6 +96,11 @@ class ModuleLauncherWidget extends Widget
         ])->count();
         $totalRtvs = SupplierRtv::count();
 
+        // 12. Executive Analytics
+        $analytics = app(WarehouseAnalyticsService::class);
+        $agingBreakdown = $analytics->getInventoryAgingBreakdown();
+        $iraMetrics = $analytics->getInventoryRecordAccuracy();
+
         return [
             'heatmap' => [
                 'total_bins' => $totalBins,
@@ -141,6 +147,10 @@ class ModuleLauncherWidget extends Widget
                 'total_rmas' => $totalRmas,
                 'pending_rtvs' => $pendingRtvs,
                 'total_rtvs' => $totalRtvs,
+            ],
+            'analytics' => [
+                'ira_percentage' => $iraMetrics['ira_percentage'],
+                'critical_aging_kg' => $agingBreakdown['critical_kg'],
             ],
         ];
     }
