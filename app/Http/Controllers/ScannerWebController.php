@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CycleCountOrder;
 use App\Models\DeliveryOrder;
 use App\Models\Item;
+use App\Models\PickingBatch;
 use App\Models\StagingRequest;
 use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
@@ -186,5 +187,21 @@ class ScannerWebController extends Controller
             ->get();
 
         return view('scanner.modes.gate-pass', compact('pendingOrders'));
+    }
+
+    /**
+     * Mode 9: Multi-Tote Wave & Batch Picking (S-Path Optimized).
+     */
+    public function batchPicking(): View
+    {
+        $activeBatches = PickingBatch::whereIn('status', [
+            PickingBatch::STATUS_ASSIGNED,
+            PickingBatch::STATUS_IN_PROGRESS,
+        ])
+            ->with(['pickingWave', 'items.bin', 'items.item'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('scanner.modes.batch-picking', compact('activeBatches'));
     }
 }

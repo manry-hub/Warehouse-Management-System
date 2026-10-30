@@ -263,6 +263,16 @@
                     </span>
                     <span class="text-xs font-bold text-white">Security Gate</span>
                 </a>
+
+                <a href="{{ route('scanner.batch-picking') }}" class="flex items-center space-x-2.5 p-3 rounded-xl bg-[#222228] active:scale-95 transition text-left col-span-2 border border-amber-500/30">
+                    <span class="p-2 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    </span>
+                    <div>
+                        <span class="text-xs font-bold text-amber-300 block">Wave & Batch Picking</span>
+                        <span class="text-[10px] text-zinc-400">S-Path Serpentine • Multi-Tote Cart</span>
+                    </div>
+                </a>
             </div>
 
             <div class="mt-4 pt-3 border-t border-zinc-800 text-center">

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\GatePassController;
 use App\Http\Controllers\Api\HopperStagingController;
 use App\Http\Controllers\Api\MesWebhookController;
 use App\Http\Controllers\Api\ScannerAuthController;
+use App\Http\Controllers\Api\ScannerBatchPickingController;
 use App\Http\Controllers\Api\ScannerCycleCountController;
 use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
@@ -29,6 +30,11 @@ Route::prefix('v1')->group(function () {
         // Staging Replenishment Picking
         Route::get('/picking/active-orders', [ScannerPickingController::class, 'activeRequests']);
         Route::post('/picking/scan', [ScannerPickingController::class, 'confirmPick']);
+
+        // Multi-Tote Batch & S-Path Wave Picking
+        Route::get('/batch-picking/active', [ScannerBatchPickingController::class, 'activeBatches']);
+        Route::get('/batch-picking/{id}/tasks', [ScannerBatchPickingController::class, 'batchTasks']);
+        Route::post('/batch-picking/confirm', [ScannerBatchPickingController::class, 'confirmItem']);
 
         // Shop-Floor Machine Hopper Staging & Partial Return
         Route::post('/hopper/verify', [HopperStagingController::class, 'verify']);

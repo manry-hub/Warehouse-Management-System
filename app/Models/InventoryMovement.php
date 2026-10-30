@@ -28,6 +28,8 @@ class InventoryMovement extends Model
 
     public const TYPE_TRANSFER_IN = 'TRANSFER_IN';
 
+    public const TYPE_BATCH_PICK = 'BATCH_PICK';
+
     protected $fillable = [
         'transaction_uuid',
         'movement_type',

@@ -213,6 +213,79 @@ class InventoryMovementService
     }
 
     /**
+     * Record batch pick movement from storage bin to cart/staging bin.
+     */
+    public function recordBatchPick(
+        MaterialLot $lot,
+        WarehouseBin $sourceBin,
+        WarehouseBin $destinationBin,
+        float $quantity,
+        string $batchNumber,
+        string $toteIdentifier,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Pick quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $sourceBin, $destinationBin, $quantity, $batchNumber, $toteIdentifier, $user, $notes) {
+            $item = $lot->item;
+
+            $sourceBalance = InventoryBalance::where('bin_id', $sourceBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $sourceBalance || $sourceBalance->quantity_on_hand < $quantity) {
+                throw new InsufficientStockException("Insufficient stock in bin {$sourceBin->bin_code} for batch pick.");
+            }
+
+            // Relieve reservation if present, then deduct on hand
+            $reservedDeduction = min($sourceBalance->quantity_reserved, $quantity);
+            $sourceBalance->quantity_reserved = (float) $sourceBalance->quantity_reserved - $reservedDeduction;
+            $sourceBalance->quantity_on_hand = (float) $sourceBalance->quantity_on_hand - $quantity;
+            $sourceBalance->save();
+
+            // Destination staging / cart buffer
+            $destBalance = InventoryBalance::where('bin_id', $destinationBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $destBalance) {
+                $destBalance = new InventoryBalance([
+                    'bin_id' => $destinationBin->id,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                ]);
+            }
+
+            $destBalance->quantity_on_hand = (float) $destBalance->quantity_on_hand + $quantity;
+            $destBalance->save();
+
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_BATCH_PICK,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $sourceBin->id,
+                'destination_bin_id' => $destinationBin->id,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'PICKING_BATCH',
+                'reference_id' => $batchNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Batch {$batchNumber} deposited to {$toteIdentifier}",
+            ]);
+        });
+    }
+
+    /**
      * Record finished goods intake from packaging station.
      */
     public function recordFinishedGoodsIntake(

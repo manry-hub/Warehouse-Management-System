@@ -7,6 +7,7 @@ use App\Models\DeliveryOrder;
 use App\Models\InventoryMovement;
 use App\Models\Item;
 use App\Models\MaterialLot;
+use App\Models\PickingWave;
 use App\Models\QualityQuarantine;
 use App\Models\Silo;
 use App\Models\TransferOrder;
@@ -67,6 +68,10 @@ class ModuleLauncherWidget extends Widget
         $totalItems = Item::where('is_active', true)->count();
         $regrindLots = MaterialLot::where('lot_type', MaterialLot::TYPE_REGRIND)->count();
 
+        // 9. Wave & Batch Picking
+        $activeWaves = PickingWave::whereIn('status', [PickingWave::STATUS_RELEASED, PickingWave::STATUS_IN_PROGRESS])->count();
+        $totalWaves = PickingWave::count();
+
         return [
             'heatmap' => [
                 'total_bins' => $totalBins,
@@ -99,6 +104,10 @@ class ModuleLauncherWidget extends Widget
             'catalog' => [
                 'total_items' => $totalItems,
                 'regrind_lots' => $regrindLots,
+            ],
+            'waves' => [
+                'active' => $activeWaves,
+                'total' => $totalWaves,
             ],
         ];
     }

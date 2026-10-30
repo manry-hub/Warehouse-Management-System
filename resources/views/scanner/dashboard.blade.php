@@ -151,6 +151,21 @@
             </div>
         </a>
 
+        <!-- 9. Wave & Batch Picking -->
+        <a href="{{ route('scanner.batch-picking') }}" class="group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl active:scale-[0.97] transition-all shadow-md min-h-[125px] sm:min-h-[135px] bg-[#1e1e24] hover:bg-[#25252e] border border-amber-500/20 col-span-2 sm:col-span-1">
+            <div class="flex items-start justify-between">
+                <div class="w-11 h-11 rounded-xl text-amber-400 bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <span class="text-[9px] font-mono font-black text-amber-400 px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/40">MODE 9</span>
+            </div>
+            <div class="mt-3">
+                <h3 class="text-xs sm:text-sm font-bold text-amber-300 group-hover:text-amber-200 tracking-wide">Batch & Wave Pick</h3>
+                <p class="text-[10px] text-gray-400 mt-0.5 leading-tight">S-Path Serpentine • Multi-Tote</p>
+            </div>
+        </a>
     </div>
 
     <!-- Quick Audio Test Bar (Touch targets >= 44px) -->

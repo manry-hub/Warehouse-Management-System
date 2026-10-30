@@ -383,6 +383,39 @@
                 </div>
             </div>
 
+            {{-- 9. Wave & Batch Picking --}}
+            <div class="module-item-card">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2.5 rounded-lg bg-orange-500/10 text-orange-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold font-mono bg-zinc-900 border border-zinc-800 text-orange-400">
+                            {{ $waves['active'] ?? 0 }} ACTIVE WAVES
+                        </span>
+                    </div>
+                    <h3 class="text-base font-bold text-white tracking-tight">Wave & Batch Picking</h3>
+                    <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
+                        Serpentine S-Path aisle routing, 4-tote multi-order carts, and barcode-validated drops.
+                    </p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                    <a href="/admin/picking-waves" class="btn-launch-primary" style="background-color: #f97316;">
+                        <span>Manage Waves &rarr;</span>
+                    </a>
+                    <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+                        <a href="/scanner/batch-picking" target="_blank" class="hover:text-amber-400 transition flex items-center gap-1">
+                            <span>Scanner Cart</span>
+                            <span class="text-zinc-600">↗</span>
+                        </a>
+                        <span class="text-zinc-700">•</span>
+                        <span class="text-zinc-300 font-bold">Total: {{ $waves['total'] ?? 0 }}</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </x-filament-widgets::widget>
