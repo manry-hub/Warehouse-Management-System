@@ -100,8 +100,9 @@ class ReplenishmentService
                             ->whereHas('lot', fn ($q) => $q->where('status', MaterialLot::STATUS_AVAILABLE))
                             ->whereRaw('(inventory_balances.quantity_on_hand - inventory_balances.quantity_reserved) > 0')
                             ->join('material_lots', 'inventory_balances.material_lot_id', '=', 'material_lots.id')
-                            ->orderByRaw('material_lots.expiry_date ASC, material_lots.created_at ASC')
-                            ->select('inventory_balances.*')
+                            ->select('inventory_balances.*', 'material_lots.expiry_date as lot_expiry', 'material_lots.created_at as lot_created')
+                            ->orderBy('lot_expiry', 'asc')
+                            ->orderBy('lot_created', 'asc')
                             ->lockForUpdate()
                             ->first();
 

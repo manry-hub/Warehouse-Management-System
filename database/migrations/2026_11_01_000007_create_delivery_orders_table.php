@@ -24,7 +24,7 @@ return new class extends Migration
         Schema::create('delivery_order_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('delivery_order_id')->constrained('delivery_orders')->cascadeOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
             $table->foreignUuid('material_lot_id')->nullable()->constrained('material_lots')->nullOnDelete();
             $table->string('carton_barcode', 100)->nullable()->index();
             $table->decimal('quantity_ordered', 12, 3);

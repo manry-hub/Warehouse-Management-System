@@ -55,9 +55,9 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('picking_batch_id')->constrained('picking_batches')->cascadeOnDelete();
             $table->foreignUuid('picking_wave_order_id')->constrained('picking_wave_orders')->cascadeOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
-            $table->foreignUuid('material_lot_id')->constrained('material_lots')->restrictOnDelete();
-            $table->foreignUuid('warehouse_bin_id')->constrained('warehouse_bins')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
+            $table->foreignUuid('material_lot_id')->constrained('material_lots');
+            $table->foreignUuid('warehouse_bin_id')->constrained('warehouse_bins');
             $table->decimal('quantity_to_pick', 12, 4);
             $table->decimal('quantity_picked', 12, 4)->default(0.0000);
             $table->string('target_tote', 50);

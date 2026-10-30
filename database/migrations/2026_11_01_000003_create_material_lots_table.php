@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('material_lots', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('lot_number', 100)->unique();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
             $table->string('vendor_code', 50)->nullable()->index();
             $table->string('vendor_lot_number', 100)->nullable()->index();
             $table->string('vendor_heat_number', 100)->nullable()->index();

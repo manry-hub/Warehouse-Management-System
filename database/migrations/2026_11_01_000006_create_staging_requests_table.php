@@ -24,7 +24,7 @@ return new class extends Migration
         Schema::create('staging_request_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('staging_request_id')->constrained('staging_requests')->cascadeOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
             $table->foreignUuid('material_lot_id')->nullable()->constrained('material_lots')->nullOnDelete();
             $table->decimal('quantity_requested', 12, 3);
             $table->decimal('quantity_picked', 12, 3)->default(0);

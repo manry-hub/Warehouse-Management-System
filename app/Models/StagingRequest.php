@@ -36,6 +36,15 @@ class StagingRequest extends Model
         'dispatched_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->requested_at)) {
+                $model->requested_at = now();
+            }
+        });
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(StagingRequestItem::class);

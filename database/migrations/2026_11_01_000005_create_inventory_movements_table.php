@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->uuid('transaction_uuid')->index();
             $table->string('movement_type', 50)->index(); // RECEIPT, PUTAWAY, STAGING_ISSUE, FG_INTAKE, SHIPMENT, ADJUSTMENT
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
-            $table->foreignUuid('material_lot_id')->constrained('material_lots')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
+            $table->foreignUuid('material_lot_id')->constrained('material_lots');
             $table->foreignUuid('source_bin_id')->nullable()->constrained('warehouse_bins')->nullOnDelete();
             $table->foreignUuid('destination_bin_id')->nullable()->constrained('warehouse_bins')->nullOnDelete();
             $table->decimal('quantity', 12, 3);

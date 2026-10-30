@@ -30,9 +30,9 @@ return new class extends Migration
         Schema::create('cycle_count_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('cycle_count_order_id')->constrained('cycle_count_orders')->cascadeOnDelete();
-            $table->foreignUuid('bin_id')->constrained('warehouse_bins')->restrictOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
-            $table->foreignUuid('material_lot_id')->constrained('material_lots')->restrictOnDelete();
+            $table->foreignUuid('bin_id')->constrained('warehouse_bins');
+            $table->foreignUuid('item_id')->constrained('items');
+            $table->foreignUuid('material_lot_id')->constrained('material_lots');
             $table->decimal('recorded_quantity', 12, 3)->default(0);
             $table->decimal('counted_quantity', 12, 3)->nullable();
             $table->decimal('variance_quantity', 12, 3)->nullable();

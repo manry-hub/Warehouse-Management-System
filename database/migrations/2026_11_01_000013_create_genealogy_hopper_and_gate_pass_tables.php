@@ -26,8 +26,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('transaction_code', 50)->unique();
             $table->string('machine_code', 50)->index();
-            $table->foreignUuid('hopper_bin_id')->constrained('warehouse_bins')->restrictOnDelete();
-            $table->foreignUuid('material_lot_id')->constrained('material_lots')->restrictOnDelete();
+            $table->foreignUuid('hopper_bin_id')->constrained('warehouse_bins');
+            $table->foreignUuid('material_lot_id')->constrained('material_lots');
             $table->foreignId('operator_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('production_order_number', 50)->index();
             $table->decimal('quantity_staged_kg', 10, 3);
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('sscc_code', 20)->unique();
             $table->foreignUuid('delivery_order_id')->nullable()->constrained('delivery_orders')->nullOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
             $table->foreignUuid('material_lot_id')->nullable()->constrained('material_lots')->nullOnDelete();
             $table->integer('carton_count')->default(0);
             $table->decimal('gross_weight_kg', 10, 3)->default(0.000);
@@ -53,11 +53,11 @@ return new class extends Migration
         });
 
         Schema::table('delivery_orders', function (Blueprint $table) {
-            $table->string('gate_pass_number', 50)->nullable()->unique()->after('status');
-            $table->foreignId('security_officer_id')->nullable()->after('gate_pass_number')->constrained('users')->nullOnDelete();
-            $table->string('seal_number', 50)->nullable()->after('security_officer_id');
-            $table->mediumText('driver_signature')->nullable()->after('seal_number');
-            $table->timestamp('gate_out_at')->nullable()->after('dispatched_at')->index();
+            $table->string('gate_pass_number', 50)->nullable()->unique();
+            $table->foreignId('security_officer_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('seal_number', 50)->nullable();
+            $table->mediumText('driver_signature')->nullable();
+            $table->timestamp('gate_out_at')->nullable()->index();
         });
     }
 

@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::create('customer_rma_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('customer_rma_id')->constrained('customer_rmas')->cascadeOnDelete();
-            $table->foreignUuid('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignUuid('item_id')->constrained('items');
             $table->foreignUuid('material_lot_id')->nullable()->constrained('material_lots')->nullOnDelete();
             $table->string('carton_barcode', 100)->nullable()->index();
             $table->decimal('quantity_returned', 12, 3);
@@ -43,8 +43,8 @@ return new class extends Migration
             $table->string('vendor_code', 50);
             $table->string('vendor_name', 100);
             $table->string('po_number', 50)->nullable();
-            $table->foreignUuid('material_lot_id')->constrained('material_lots')->restrictOnDelete();
-            $table->foreignUuid('warehouse_bin_id')->constrained('warehouse_bins')->restrictOnDelete();
+            $table->foreignUuid('material_lot_id')->constrained('material_lots');
+            $table->foreignUuid('warehouse_bin_id')->constrained('warehouse_bins');
             $table->decimal('quantity_kg', 12, 4);
             $table->string('reason', 255);
             $table->string('status', 30)->default('DRAFT')->index(); // DRAFT, APPROVED, DISPATCHED, CANCELLED
