@@ -172,5 +172,98 @@ class WarehouseTopologySeeder extends Seeder
                 }
             }
         }
+
+        // 2. Regional Distribution Center (WH-RDC)
+        $rdc = Warehouse::firstOrCreate(
+            ['code' => 'WH-RDC'],
+            [
+                'name' => 'Karawang Regional Distribution Center',
+                'address' => 'KIIC Industrial Park Lot C-4, Karawang, West Java',
+                'is_active' => true,
+            ]
+        );
+
+        $rdcZoneFg = WarehouseZone::firstOrCreate(
+            ['warehouse_id' => $rdc->id, 'code' => 'ZONE-RDC-FG'],
+            [
+                'name' => 'RDC Finished Goods Distribution Racks',
+                'zone_type' => WarehouseZone::TYPE_FINISHED_GOODS,
+                'is_temperature_controlled' => false,
+            ]
+        );
+
+        for ($r = 1; $r <= 2; $r++) {
+            for ($s = 1; $s <= 2; $s++) {
+                WarehouseBin::firstOrCreate(
+                    ['bin_code' => sprintf('RDC-FG-%02d-%02d', $r, $s)],
+                    [
+                        'zone_id' => $rdcZoneFg->id,
+                        'aisle' => 'A',
+                        'rack' => (string) $r,
+                        'shelf' => (string) $s,
+                        'bin' => '1',
+                        'max_weight_kg' => 3000.00,
+                        'max_volume_cbm' => 5.00,
+                        'is_blocked' => false,
+                    ]
+                );
+            }
+        }
+
+        $rdcZoneStg = WarehouseZone::firstOrCreate(
+            ['warehouse_id' => $rdc->id, 'code' => 'ZONE-RDC-STG'],
+            [
+                'name' => 'RDC Cross-Dock & Shipping Staging Bay',
+                'zone_type' => WarehouseZone::TYPE_STAGING_BUFFER,
+                'is_temperature_controlled' => false,
+            ]
+        );
+
+        WarehouseBin::firstOrCreate(
+            ['bin_code' => 'RDC-STG-BAY-01'],
+            [
+                'zone_id' => $rdcZoneStg->id,
+                'aisle' => 'STG',
+                'rack' => 'BAY',
+                'shelf' => '1',
+                'bin' => '1',
+                'max_weight_kg' => 10000.00,
+                'max_volume_cbm' => 25.00,
+                'is_blocked' => false,
+            ]
+        );
+
+        // 3. Virtual In-Transit Freight Warehouse (WH-TRANSIT)
+        $transitWh = Warehouse::firstOrCreate(
+            ['code' => 'WH-TRANSIT'],
+            [
+                'name' => 'Inter-Facility In-Transit Virtual Warehouse',
+                'address' => 'In-Transit Highway Logistics Freight',
+                'is_active' => true,
+            ]
+        );
+
+        $transitZone = WarehouseZone::firstOrCreate(
+            ['warehouse_id' => $transitWh->id, 'code' => 'ZONE-INTRANSIT'],
+            [
+                'name' => 'In-Transit Moving Freight Zone',
+                'zone_type' => WarehouseZone::TYPE_IN_TRANSIT,
+                'is_temperature_controlled' => false,
+            ]
+        );
+
+        WarehouseBin::firstOrCreate(
+            ['bin_code' => 'BIN-TRANSIT'],
+            [
+                'zone_id' => $transitZone->id,
+                'aisle' => 'TR',
+                'rack' => 'TR',
+                'shelf' => '1',
+                'bin' => '1',
+                'max_weight_kg' => 999999.00,
+                'max_volume_cbm' => 9999.00,
+                'is_blocked' => false,
+            ]
+        );
     }
 }

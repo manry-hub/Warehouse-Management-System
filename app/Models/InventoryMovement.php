@@ -24,6 +24,10 @@ class InventoryMovement extends Model
 
     public const TYPE_ADJUSTMENT = 'ADJUSTMENT';
 
+    public const TYPE_TRANSFER_OUT = 'TRANSFER_OUT';
+
+    public const TYPE_TRANSFER_IN = 'TRANSFER_IN';
+
     protected $fillable = [
         'transaction_uuid',
         'movement_type',

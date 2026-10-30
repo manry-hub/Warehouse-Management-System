@@ -398,4 +398,152 @@ class InventoryMovementService
             }
         });
     }
+
+    /**
+     * Record an inter-warehouse transfer departure (Origin Bin -> Transit Bin).
+     */
+    public function recordTransferOut(
+        MaterialLot $lot,
+        WarehouseBin $originBin,
+        WarehouseBin $transitBin,
+        float $quantity,
+        string $orderNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Transfer dispatch quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $originBin, $transitBin, $quantity, $orderNumber, $user, $notes) {
+            $item = $lot->item;
+
+            // 1. Lock and deduct from origin bin
+            $originBalance = InventoryBalance::where('bin_id', $originBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            $availableQty = $originBalance ? ($originBalance->quantity_on_hand - $originBalance->quantity_reserved) : 0;
+            if (! $originBalance || $availableQty < $quantity) {
+                throw new InsufficientStockException(
+                    "Insufficient stock in origin bin {$originBin->bin_code} for transfer {$orderNumber}. Requested: {$quantity}, Available: {$availableQty}"
+                );
+            }
+
+            $originBalance->quantity_on_hand = (float) $originBalance->quantity_on_hand - $quantity;
+            $originBalance->save();
+
+            // 2. Lock or create transit balance
+            $transitBalance = InventoryBalance::where('bin_id', $transitBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $transitBalance) {
+                $transitBalance = new InventoryBalance([
+                    'bin_id' => $transitBin->id,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                ]);
+            }
+
+            $transitBalance->quantity_on_hand = (float) $transitBalance->quantity_on_hand + $quantity;
+            $transitBalance->save();
+
+            // 3. Post movement
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_TRANSFER_OUT,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $originBin->id,
+                'destination_bin_id' => $transitBin->id,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'TRANSFER_ORDER',
+                'reference_id' => $orderNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Inter-warehouse transfer dispatch: {$orderNumber}",
+            ]);
+        });
+    }
+
+    /**
+     * Record an inter-warehouse transfer arrival (Transit Bin -> Destination Bin / Cross-Dock Staging).
+     */
+    public function recordTransferIn(
+        MaterialLot $lot,
+        WarehouseBin $transitBin,
+        WarehouseBin $destinationBin,
+        float $quantity,
+        string $orderNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Transfer receipt quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $transitBin, $destinationBin, $quantity, $orderNumber, $user, $notes) {
+            $item = $lot->item;
+
+            // 1. Lock and deduct from transit bin
+            $transitBalance = InventoryBalance::where('bin_id', $transitBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            $availableTransit = $transitBalance ? (float) $transitBalance->quantity_on_hand : 0;
+            if (! $transitBalance || $availableTransit < $quantity) {
+                throw new InsufficientStockException(
+                    "Insufficient in-transit inventory for transfer {$orderNumber}. In transit: {$availableTransit}, Requested: {$quantity}"
+                );
+            }
+
+            $transitBalance->quantity_on_hand = (float) $transitBalance->quantity_on_hand - $quantity;
+            $transitBalance->save();
+
+            // 2. Lock or create destination balance
+            $destBalance = InventoryBalance::where('bin_id', $destinationBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $destBalance) {
+                $destBalance = new InventoryBalance([
+                    'bin_id' => $destinationBin->id,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                ]);
+            }
+
+            $destBalance->quantity_on_hand = (float) $destBalance->quantity_on_hand + $quantity;
+            $destBalance->save();
+
+            // 3. Post movement
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_TRANSFER_IN,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $transitBin->id,
+                'destination_bin_id' => $destinationBin->id,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'TRANSFER_ORDER',
+                'reference_id' => $orderNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Inter-warehouse transfer receipt: {$orderNumber}",
+            ]);
+        });
+    }
 }

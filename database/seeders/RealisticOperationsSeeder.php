@@ -13,6 +13,8 @@ use App\Models\Silo;
 use App\Models\SiloTelemetryReading;
 use App\Models\StagingRequest;
 use App\Models\StagingRequestItem;
+use App\Models\TransferOrder;
+use App\Models\TransferOrderItem;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseBin;
@@ -649,5 +651,78 @@ class RealisticOperationsSeeder extends Seeder
             temperatureC: 24.2,
             recordedAt: Carbon::now()->subMinutes(5)
         );
+
+        // -------------------------------------------------------------
+        // STEP 8: Seed Inter-Warehouse Transfer Orders & Cross-Docking
+        // -------------------------------------------------------------
+        $rdcWarehouse = Warehouse::where('code', 'WH-RDC')->first();
+        $transitWarehouse = Warehouse::where('code', 'WH-TRANSIT')->first();
+
+        if ($rdcWarehouse && $transitWarehouse && isset($lots['FG-BZL-LH-01'], $lots['FG-BZL-RH-01'])) {
+            $binFgA01 = WarehouseBin::where('bin_code', 'FG-A-01-01')->first();
+            $binFgA02 = WarehouseBin::where('bin_code', 'FG-A-01-02')->first();
+            $binRdcFg01 = WarehouseBin::where('bin_code', 'RDC-FG-01-01')->first();
+
+            // 1. Completed Transfer Order (WH-MAIN -> WH-RDC)
+            $completedXfer = TransferOrder::firstOrCreate(
+                ['order_number' => 'XFER-202610-0001'],
+                [
+                    'origin_warehouse_id' => $warehouse->id,
+                    'destination_warehouse_id' => $rdcWarehouse->id,
+                    'carrier_name' => 'PT Pos Logistik Shuttle 01',
+                    'vehicle_plate_number' => 'B 9482 TYN',
+                    'waybill_number' => 'BOL-XFER-202610-0001',
+                    'status' => TransferOrder::STATUS_COMPLETED,
+                    'dispatched_at' => Carbon::now()->subDays(2),
+                    'received_at' => Carbon::now()->subDay(),
+                    'created_by' => $admin->id,
+                    'notes' => 'Weekly finished goods replenishment transfer to Karawang distribution center.',
+                ]
+            );
+
+            TransferOrderItem::firstOrCreate(
+                [
+                    'transfer_order_id' => $completedXfer->id,
+                    'material_lot_id' => $lots['FG-BZL-LH-01']->id,
+                ],
+                [
+                    'item_id' => $itemBzlLh->id,
+                    'origin_bin_id' => $binFgA01->id,
+                    'destination_bin_id' => $binRdcFg01->id,
+                    'quantity' => 200.00,
+                    'is_cross_docked' => false,
+                ]
+            );
+
+            // 2. Active In-Transit Transfer Order (Currently moving in WH-TRANSIT)
+            $inTransitXfer = TransferOrder::firstOrCreate(
+                ['order_number' => 'XFER-202610-0002'],
+                [
+                    'origin_warehouse_id' => $warehouse->id,
+                    'destination_warehouse_id' => $rdcWarehouse->id,
+                    'carrier_name' => 'PT Pos Logistik Shuttle 02',
+                    'vehicle_plate_number' => 'B 9123 SXZ',
+                    'waybill_number' => 'BOL-XFER-202610-0002',
+                    'status' => TransferOrder::STATUS_IN_TRANSIT,
+                    'dispatched_at' => Carbon::now()->subHours(3),
+                    'created_by' => $admin->id,
+                    'notes' => 'Express dispatch of front bumper RH bezels to Karawang RDC.',
+                ]
+            );
+
+            TransferOrderItem::firstOrCreate(
+                [
+                    'transfer_order_id' => $inTransitXfer->id,
+                    'material_lot_id' => $lots['FG-BZL-RH-01']->id,
+                ],
+                [
+                    'item_id' => $itemBzlRh->id,
+                    'origin_bin_id' => $binFgA02->id,
+                    'destination_bin_id' => null,
+                    'quantity' => 150.00,
+                    'is_cross_docked' => false,
+                ]
+            );
+        }
     }
 }

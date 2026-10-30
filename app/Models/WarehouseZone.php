@@ -22,6 +22,8 @@ class WarehouseZone extends Model
 
     public const TYPE_SILO = 'SILO';
 
+    public const TYPE_IN_TRANSIT = 'IN_TRANSIT';
+
     protected $fillable = [
         'warehouse_id',
         'code',
