@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\CustomerRmaResource\Pages\CreateCustomerRma;
+use App\Filament\Resources\CustomerRmaResource\Pages\ListCustomerRmas;
 use App\Models\CustomerRma;
+use App\Models\DeliveryOrder;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
 use App\Models\Item;
@@ -17,6 +20,7 @@ use Database\Seeders\RoleAndPermissionSeeder;
 use Database\Seeders\WarehouseTopologySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class ReturnsManagementTest extends TestCase
@@ -342,5 +346,61 @@ class ReturnsManagementTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonFragment(['rma_number' => $rma->rma_number]);
+    }
+
+    public function test_filament_customer_rma_resource_renders_and_initiates_rma_without_query_exception(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Warehouse Manager');
+
+        $do = DeliveryOrder::create([
+            'do_number' => 'DO-TEST-RMA-9001',
+            'customer_name' => 'PT Astra Daihatsu Motor',
+            'shipping_address' => 'Sunter Plant 1',
+            'vehicle_plate_number' => 'B 1234 CD',
+            'driver_name' => 'Bambang',
+            'status' => DeliveryOrder::STATUS_DISPATCHED,
+        ]);
+
+        $item = Item::where('category', Item::CATEGORY_FINISHED_GOOD)->first() ?? Item::firstOrFail();
+
+        $this->actingAs($manager);
+
+        // 1. Verify Create form mounts successfully without QueryException
+        Livewire::test(CreateCustomerRma::class)
+            ->assertSuccessful()
+            ->set('data.customer_name', 'PT Astra Daihatsu Motor')
+            ->set('data.delivery_order_id', $do->id)
+            ->set('data.defect_reason', 'WARPAGE')
+            ->set('data.items', [
+                [
+                    'item_id' => $item->id,
+                    'carton_barcode' => 'CARTON-RET-9001',
+                    'quantity_returned' => 10,
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $rma = CustomerRma::where('customer_name', 'PT Astra Daihatsu Motor')->first();
+        $this->assertNotNull($rma);
+        $this->assertEquals($do->id, $rma->delivery_order_id);
+        $this->assertEquals(1, $rma->total_cartons);
+
+        // 2. Verify List page renders DO number in table
+        Livewire::test(ListCustomerRmas::class)
+            ->assertSuccessful()
+            ->assertSee($rma->rma_number)
+            ->assertSee('DO-TEST-RMA-9001');
+
+        // 3. Verify Scanner pending returns API includes do_number
+        Sanctum::actingAs($manager);
+        $response = $this->getJson('/api/v1/scanner/returns/pending');
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'rma_number' => $rma->rma_number,
+                'do_number' => 'DO-TEST-RMA-9001',
+            ]);
     }
 }

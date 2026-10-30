@@ -36,7 +36,7 @@ class ScannerReturnsController extends Controller
                 'status' => $rma->status,
                 'total_cartons' => $rma->total_cartons,
                 'received_cartons' => $rma->received_cartons,
-                'do_number' => $rma->deliveryOrder->order_number ?? null,
+                'do_number' => $rma->deliveryOrder->do_number ?? null,
                 'items' => $rma->items->map(fn ($item) => [
                     'id' => $item->id,
                     'sku' => $item->item->item_code ?? 'N/A',

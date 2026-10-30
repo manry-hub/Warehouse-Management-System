@@ -62,8 +62,10 @@ class CustomerRmaResource extends Resource
 
                         Forms\Components\Select::make('delivery_order_id')
                             ->label('Delivery Order Ref')
-                            ->options(DeliveryOrder::pluck('order_number', 'id'))
-                            ->searchable()
+                            ->relationship('deliveryOrder', 'do_number')
+                            ->getOptionLabelFromRecordUsing(fn (DeliveryOrder $record) => "{$record->do_number} — {$record->customer_name}")
+                            ->searchable(['do_number', 'customer_name'])
+                            ->preload()
                             ->nullable(),
 
                         Forms\Components\Select::make('defect_reason')
@@ -171,9 +173,10 @@ class CustomerRmaResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('deliveryOrder.order_number')
+                Tables\Columns\TextColumn::make('deliveryOrder.do_number')
                     ->label('DO Ref')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('defect_reason')
