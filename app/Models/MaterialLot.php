@@ -20,9 +20,20 @@ class MaterialLot extends Model
 
     public const STATUS_QUARANTINE = 'QUARANTINE';
 
+    public const TYPE_VIRGIN = 'VIRGIN';
+
+    public const TYPE_REGRIND = 'REGRIND';
+
+    public const TYPE_MASTERBATCH = 'MASTERBATCH';
+
     protected $fillable = [
         'lot_number',
+        'lot_type',
         'item_id',
+        'parent_lot_id',
+        'parent_production_order',
+        'regrind_generation',
+        'regrind_source_machine',
         'vendor_code',
         'vendor_lot_number',
         'vendor_heat_number',
@@ -39,8 +50,29 @@ class MaterialLot extends Model
         'manufactured_date' => 'date',
         'expiry_date' => 'date',
         'coa_metrics' => 'array',
+        'regrind_generation' => 'integer',
         'qc_inspected_at' => 'datetime',
     ];
+
+    public function parentLot(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_lot_id');
+    }
+
+    public function regrindLots(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_lot_id');
+    }
+
+    public function isRegrind(): bool
+    {
+        return $this->lot_type === self::TYPE_REGRIND;
+    }
+
+    public function isVirgin(): bool
+    {
+        return $this->lot_type === self::TYPE_VIRGIN;
+    }
 
     public function item(): BelongsTo
     {

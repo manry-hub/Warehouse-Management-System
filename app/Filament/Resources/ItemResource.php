@@ -52,6 +52,20 @@ class ItemResource extends Resource
                 Forms\Components\TextInput::make('shelf_life_days')
                     ->numeric()
                     ->suffix('Days'),
+                Forms\Components\Section::make('Regrind Recycling Settings')
+                    ->schema([
+                        Forms\Components\Toggle::make('allow_regrind')
+                            ->label('Allow Regrind Blending')
+                            ->helperText('Permit recycled runner scrap to be blended into FEFO picklists.')
+                            ->default(false)
+                            ->reactive(),
+                        Forms\Components\TextInput::make('max_regrind_percentage')
+                            ->label('Max Regrind Ratio Cap (%)')
+                            ->numeric()
+                            ->suffix('%')
+                            ->default(15.00)
+                            ->visible(fn (callable $get) => (bool) $get('allow_regrind')),
+                    ])->columns(2),
                 Forms\Components\Toggle::make('is_active')
                     ->default(true),
             ]);
@@ -76,6 +90,12 @@ class ItemResource extends Resource
                 Tables\Columns\TextColumn::make('standard_pack_qty')
                     ->label('Pack Size')
                     ->numeric(2),
+                Tables\Columns\IconColumn::make('allow_regrind')
+                    ->label('Regrind')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('max_regrind_percentage')
+                    ->label('Regrind Cap')
+                    ->formatStateUsing(fn ($record) => $record->allow_regrind ? "{$record->max_regrind_percentage}%" : '—'),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
             ])
@@ -87,6 +107,8 @@ class ItemResource extends Resource
                         Item::CATEGORY_PACKAGING => 'Packaging',
                         Item::CATEGORY_FINISHED_GOOD => 'Finished Good',
                     ]),
+                Tables\Filters\TernaryFilter::make('allow_regrind')
+                    ->label('Regrind Allowed'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

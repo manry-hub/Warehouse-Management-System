@@ -18,6 +18,8 @@ class ItemCatalogSeeder extends Seeder
                 'standard_pack_qty' => 25.00,
                 'minimum_safety_stock' => 1000.00,
                 'shelf_life_days' => 730, // 2 years
+                'allow_regrind' => true,
+                'max_regrind_percentage' => 15.00,
                 'is_active' => true,
             ],
             [

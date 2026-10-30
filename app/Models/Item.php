@@ -27,6 +27,8 @@ class Item extends Model
         'standard_pack_qty',
         'minimum_safety_stock',
         'shelf_life_days',
+        'allow_regrind',
+        'max_regrind_percentage',
         'is_active',
     ];
 
@@ -34,8 +36,20 @@ class Item extends Model
         'standard_pack_qty' => 'decimal:2',
         'minimum_safety_stock' => 'decimal:2',
         'shelf_life_days' => 'integer',
+        'allow_regrind' => 'boolean',
+        'max_regrind_percentage' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    public function allowsRegrind(): bool
+    {
+        return (bool) $this->allow_regrind;
+    }
+
+    public function getMaxRegrindRatio(): float
+    {
+        return $this->allowsRegrind() ? (float) $this->max_regrind_percentage : 0.0;
+    }
 
     public function lots(): HasMany
     {

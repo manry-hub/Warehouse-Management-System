@@ -81,10 +81,21 @@ class MaterialLotResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('lot_type')
+                    ->badge()
+                    ->colors([
+                        'primary' => MaterialLot::TYPE_VIRGIN,
+                        'warning' => MaterialLot::TYPE_REGRIND,
+                        'info' => MaterialLot::TYPE_MASTERBATCH,
+                    ]),
                 Tables\Columns\TextColumn::make('item.sku')
                     ->label('SKU')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('regrind_source_machine')
+                    ->label('IMM Source')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('vendor_heat_number')
                     ->label('Heat / Smelt #')
                     ->searchable(),
@@ -104,6 +115,12 @@ class MaterialLotResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('lot_type')
+                    ->options([
+                        MaterialLot::TYPE_VIRGIN => 'Virgin Resin',
+                        MaterialLot::TYPE_REGRIND => 'Recycled Regrind',
+                        MaterialLot::TYPE_MASTERBATCH => 'Masterbatch',
+                    ]),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         MaterialLot::STATUS_QA_HOLD => 'QA Hold',

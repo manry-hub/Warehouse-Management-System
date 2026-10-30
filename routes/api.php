@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ScannerAuthController;
 use App\Http\Controllers\Api\ScannerCycleCountController;
 use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
+use App\Http\Controllers\Api\ScannerRegrindController;
 use App\Http\Controllers\Api\ScannerShippingController;
 use App\Http\Middleware\VerifyMesWebhookSignature;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,10 @@ Route::prefix('v1')->group(function () {
 
         // Outbound Truck Loading
         Route::post('/shipping/scan-truck', [ScannerShippingController::class, 'scanTruckCarton']);
+
+        // Regrind Recycling & Granulator Intake
+        Route::post('/regrind/intake', [ScannerRegrindController::class, 'intake']);
+        Route::get('/regrind/stock', [ScannerRegrindController::class, 'availableStock']);
 
         // Stock Opname & Blind Cycle Counting
         Route::get('/cycle-counts/active', [ScannerCycleCountController::class, 'activeOrders']);

@@ -17,6 +17,8 @@ class StagingRequestItem extends Model
         'material_lot_id',
         'quantity_requested',
         'quantity_picked',
+        'is_regrind',
+        'blend_percentage',
         'source_bin_id',
         'staging_bin_id',
         'status',
@@ -25,6 +27,8 @@ class StagingRequestItem extends Model
     protected $casts = [
         'quantity_requested' => 'decimal:3',
         'quantity_picked' => 'decimal:3',
+        'is_regrind' => 'boolean',
+        'blend_percentage' => 'decimal:2',
     ];
 
     public function stagingRequest(): BelongsTo
