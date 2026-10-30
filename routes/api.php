@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ScannerCycleCountController;
 use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
 use App\Http\Controllers\Api\ScannerRegrindController;
+use App\Http\Controllers\Api\ScannerReplenishmentController;
 use App\Http\Controllers\Api\ScannerShippingController;
 use App\Http\Controllers\Api\SiloTelemetryController;
 use App\Http\Controllers\Api\TraceabilityController;
@@ -35,6 +36,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/batch-picking/active', [ScannerBatchPickingController::class, 'activeBatches']);
         Route::get('/batch-picking/{id}/tasks', [ScannerBatchPickingController::class, 'batchTasks']);
         Route::post('/batch-picking/confirm', [ScannerBatchPickingController::class, 'confirmItem']);
+
+        // Forklift Min-Max Forward-Pick Replenishment
+        Route::get('/replenishments/pending', [ScannerReplenishmentController::class, 'pending']);
+        Route::post('/replenishments/{id}/start', [ScannerReplenishmentController::class, 'start']);
+        Route::post('/replenishments/{id}/confirm', [ScannerReplenishmentController::class, 'confirm']);
 
         // Shop-Floor Machine Hopper Staging & Partial Return
         Route::post('/hopper/verify', [HopperStagingController::class, 'verify']);

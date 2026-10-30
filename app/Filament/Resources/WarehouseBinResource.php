@@ -37,6 +37,23 @@ class WarehouseBinResource extends Resource
                 Forms\Components\TextInput::make('max_weight_kg')->numeric()->suffix('KG'),
                 Forms\Components\TextInput::make('max_volume_cbm')->numeric()->suffix('m³'),
                 Forms\Components\Toggle::make('is_blocked'),
+                Forms\Components\Section::make('Forward Pick-Face Replenishment')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_pick_face')
+                            ->label('Is Forward Pick Face')
+                            ->helperText('Designate for automated min/max top-off replenishment.')
+                            ->reactive(),
+                        Forms\Components\TextInput::make('min_stock_kg')
+                            ->label('Min Safety Stock')
+                            ->numeric()
+                            ->suffix('KG')
+                            ->visible(fn (Forms\Get $get) => (bool) $get('is_pick_face')),
+                        Forms\Components\TextInput::make('max_stock_kg')
+                            ->label('Max Top-Off Target')
+                            ->numeric()
+                            ->suffix('KG')
+                            ->visible(fn (Forms\Get $get) => (bool) $get('is_pick_face')),
+                    ])->columns(3),
             ]);
     }
 
@@ -61,6 +78,9 @@ class WarehouseBinResource extends Resource
                 Tables\Columns\IconColumn::make('is_blocked')
                     ->boolean()
                     ->label('Blocked'),
+                Tables\Columns\IconColumn::make('is_pick_face')
+                    ->boolean()
+                    ->label('Pick Face'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('zone_id')

@@ -286,6 +286,79 @@ class InventoryMovementService
     }
 
     /**
+     * Record internal replenishment movement from bulk storage to forward-pick face bin.
+     */
+    public function recordReplenishment(
+        MaterialLot $lot,
+        WarehouseBin $sourceBulkBin,
+        WarehouseBin $targetPickBin,
+        float $quantity,
+        string $taskNumber,
+        ?User $user = null,
+        ?string $notes = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Replenishment quantity must be positive.');
+        }
+
+        return DB::transaction(function () use ($lot, $sourceBulkBin, $targetPickBin, $quantity, $taskNumber, $user, $notes) {
+            $item = $lot->item;
+
+            // Lock source bulk balance
+            $sourceBalance = InventoryBalance::where('bin_id', $sourceBulkBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $sourceBalance || $sourceBalance->quantity_on_hand < $quantity) {
+                throw new InsufficientStockException("Insufficient stock in bulk bin {$sourceBulkBin->bin_code} for replenishment.");
+            }
+
+            // Relieve reservation held during replenishment transit
+            $reservedDeduction = min($sourceBalance->quantity_reserved, $quantity);
+            $sourceBalance->quantity_reserved = (float) $sourceBalance->quantity_reserved - $reservedDeduction;
+            $sourceBalance->quantity_on_hand = (float) $sourceBalance->quantity_on_hand - $quantity;
+            $sourceBalance->save();
+
+            // Lock or create target forward-pick balance
+            $destBalance = InventoryBalance::where('bin_id', $targetPickBin->id)
+                ->where('item_id', $item->id)
+                ->where('material_lot_id', $lot->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $destBalance) {
+                $destBalance = new InventoryBalance([
+                    'bin_id' => $targetPickBin->id,
+                    'item_id' => $item->id,
+                    'material_lot_id' => $lot->id,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                ]);
+            }
+
+            $destBalance->quantity_on_hand = (float) $destBalance->quantity_on_hand + $quantity;
+            $destBalance->save();
+
+            return InventoryMovement::create([
+                'transaction_uuid' => (string) Str::uuid(),
+                'movement_type' => InventoryMovement::TYPE_REPLENISHMENT,
+                'item_id' => $item->id,
+                'material_lot_id' => $lot->id,
+                'source_bin_id' => $sourceBulkBin->id,
+                'destination_bin_id' => $targetPickBin->id,
+                'quantity' => $quantity,
+                'uom' => $item->unit_of_measure,
+                'reference_type' => 'REPLENISHMENT_TASK',
+                'reference_id' => $taskNumber,
+                'user_id' => $user?->id,
+                'notes' => $notes ?? "Replenished from {$sourceBulkBin->bin_code} to pick face {$targetPickBin->bin_code}",
+            ]);
+        });
+    }
+
+    /**
      * Record finished goods intake from packaging station.
      */
     public function recordFinishedGoodsIntake(

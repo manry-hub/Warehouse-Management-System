@@ -22,12 +22,18 @@ class WarehouseBin extends Model
         'max_weight_kg',
         'max_volume_cbm',
         'is_blocked',
+        'is_pick_face',
+        'min_stock_kg',
+        'max_stock_kg',
     ];
 
     protected $casts = [
         'max_weight_kg' => 'decimal:2',
         'max_volume_cbm' => 'decimal:2',
         'is_blocked' => 'boolean',
+        'is_pick_face' => 'boolean',
+        'min_stock_kg' => 'decimal:3',
+        'max_stock_kg' => 'decimal:3',
     ];
 
     public function zone(): BelongsTo
@@ -48,5 +54,10 @@ class WarehouseBin extends Model
     public function outgoingMovements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class, 'source_bin_id');
+    }
+
+    public function replenishmentTasks(): HasMany
+    {
+        return $this->hasMany(ReplenishmentTask::class, 'target_bin_id');
     }
 }

@@ -29,5 +29,6 @@ Route::prefix('scanner')->group(function () {
         Route::get('/hopper', [ScannerWebController::class, 'hopper'])->name('hopper');
         Route::get('/gate-pass', [ScannerWebController::class, 'gatePass'])->name('gate-pass');
         Route::get('/batch-picking', [ScannerWebController::class, 'batchPicking'])->name('batch-picking');
+        Route::get('/replenishment', [ScannerWebController::class, 'replenishment'])->name('replenishment');
     });
 });

@@ -166,6 +166,22 @@
                 <p class="text-[10px] text-gray-400 mt-0.5 leading-tight">S-Path Serpentine • Multi-Tote</p>
             </div>
         </a>
+
+        <!-- 10. Forklift Replenishment -->
+        <a href="{{ route('scanner.replenishment') }}" class="group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl active:scale-[0.97] transition-all shadow-md min-h-[125px] sm:min-h-[135px] bg-[#1e1e24] hover:bg-[#25252e] border border-cyan-500/20 col-span-2 sm:col-span-1">
+            <div class="flex items-start justify-between">
+                <div class="w-11 h-11 rounded-xl text-cyan-400 bg-cyan-500/15 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </div>
+                <span class="text-[9px] font-mono font-black text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/40">MODE 10</span>
+            </div>
+            <div class="mt-3">
+                <h3 class="text-xs sm:text-sm font-bold text-cyan-300 group-hover:text-cyan-200 tracking-wide">Top-Off Restock</h3>
+                <p class="text-[10px] text-gray-400 mt-0.5 leading-tight">Bulk to Pick-Face • Min-Max</p>
+            </div>
+        </a>
     </div>
 
     <!-- Quick Audio Test Bar (Touch targets >= 44px) -->

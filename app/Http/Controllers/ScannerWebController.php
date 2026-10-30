@@ -6,6 +6,7 @@ use App\Models\CycleCountOrder;
 use App\Models\DeliveryOrder;
 use App\Models\Item;
 use App\Models\PickingBatch;
+use App\Models\ReplenishmentTask;
 use App\Models\StagingRequest;
 use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
@@ -203,5 +204,23 @@ class ScannerWebController extends Controller
             ->get();
 
         return view('scanner.modes.batch-picking', compact('activeBatches'));
+    }
+
+    /**
+     * Mode 10: Forklift Min-Max Forward-Pick Replenishment.
+     */
+    public function replenishment(): View
+    {
+        $pendingTasks = ReplenishmentTask::whereIn('status', [
+            ReplenishmentTask::STATUS_PENDING,
+            ReplenishmentTask::STATUS_ASSIGNED,
+            ReplenishmentTask::STATUS_IN_TRANSIT,
+        ])
+            ->with(['targetBin', 'sourceBin', 'item', 'materialLot'])
+            ->orderByRaw("CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'URGENT' THEN 2 ELSE 3 END")
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('scanner.modes.replenishment', compact('pendingTasks'));
     }
 }

@@ -273,6 +273,16 @@
                         <span class="text-[10px] text-zinc-400">S-Path Serpentine • Multi-Tote Cart</span>
                     </div>
                 </a>
+
+                <a href="{{ route('scanner.replenishment') }}" class="flex items-center space-x-2.5 p-3 rounded-xl bg-[#222228] active:scale-95 transition text-left col-span-2 border border-cyan-500/30">
+                    <span class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </span>
+                    <div>
+                        <span class="text-xs font-bold text-cyan-300 block">Forklift Replenishment</span>
+                        <span class="text-[10px] text-zinc-400">Min-Max Top-Off • Bulk to Pick-Face</span>
+                    </div>
+                </a>
             </div>
 
             <div class="mt-4 pt-3 border-t border-zinc-800 text-center">

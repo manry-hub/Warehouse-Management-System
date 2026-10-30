@@ -9,6 +9,7 @@ use App\Models\Item;
 use App\Models\MaterialLot;
 use App\Models\PickingWave;
 use App\Models\QualityQuarantine;
+use App\Models\ReplenishmentTask;
 use App\Models\Silo;
 use App\Models\TransferOrder;
 use App\Models\WarehouseBin;
@@ -72,6 +73,14 @@ class ModuleLauncherWidget extends Widget
         $activeWaves = PickingWave::whereIn('status', [PickingWave::STATUS_RELEASED, PickingWave::STATUS_IN_PROGRESS])->count();
         $totalWaves = PickingWave::count();
 
+        // 10. Replenishment Tasks
+        $pendingReplenishments = ReplenishmentTask::whereIn('status', [
+            ReplenishmentTask::STATUS_PENDING,
+            ReplenishmentTask::STATUS_ASSIGNED,
+            ReplenishmentTask::STATUS_IN_TRANSIT,
+        ])->count();
+        $totalReplenishments = ReplenishmentTask::count();
+
         return [
             'heatmap' => [
                 'total_bins' => $totalBins,
@@ -108,6 +117,10 @@ class ModuleLauncherWidget extends Widget
             'waves' => [
                 'active' => $activeWaves,
                 'total' => $totalWaves,
+            ],
+            'replenishments' => [
+                'pending' => $pendingReplenishments,
+                'total' => $totalReplenishments,
             ],
         ];
     }

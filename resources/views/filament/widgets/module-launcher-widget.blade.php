@@ -416,6 +416,39 @@
                 </div>
             </div>
 
+            {{-- 10. Dynamic Min-Max Replenishment --}}
+            <div class="module-item-card">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold font-mono bg-zinc-900 border border-zinc-800 text-cyan-400">
+                            {{ $replenishments['pending'] ?? 0 }} PENDING TASKS
+                        </span>
+                    </div>
+                    <h3 class="text-base font-bold text-white tracking-tight">Pick-Face Replenishment</h3>
+                    <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
+                        Min-Max safety stock monitoring, FEFO bulk lot auto-reserving, and directed forklift transfers.
+                    </p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                    <a href="/admin/replenishment-tasks" class="btn-launch-primary" style="background-color: #06b6d4; color: #082f49;">
+                        <span>View Tasks &rarr;</span>
+                    </a>
+                    <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+                        <a href="/scanner/replenishment" target="_blank" class="hover:text-amber-400 transition flex items-center gap-1">
+                            <span>Forklift App</span>
+                            <span class="text-zinc-600">↗</span>
+                        </a>
+                        <span class="text-zinc-700">•</span>
+                        <span class="text-zinc-300 font-bold">Total: {{ $replenishments['total'] ?? 0 }}</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </x-filament-widgets::widget>
