@@ -44,7 +44,7 @@
                         </div>
                         <button 
                             onclick="selectGateOrder('{{ $order->do_number }}', '{{ $order->vehicle_plate_number }}', '{{ $order->driver_name }}')"
-                            class="px-3.5 py-2 rounded-xl text-black font-bold text-xs uppercase shadow"
+                            class="min-h-[44px] min-w-[76px] px-4 py-2.5 rounded-xl text-black font-bold text-xs uppercase shadow active:scale-95 transition flex items-center justify-center"
                             style="background-color: #14b8a6; border: none;"
                         >
                             Inspect
@@ -56,53 +56,53 @@
     </div>
 
     <!-- Gate Clearance Form (Modal/Console) -->
-    <div id="gate-console-card" class="hidden rounded-2xl p-4 space-y-3 shadow-xl" style="background-color: #1e1e24; border: none;">
+    <div id="gate-console-card" class="hidden rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl" style="background-color: #1e1e24; border: none;">
         <div class="flex items-center justify-between pb-2 mb-1">
-            <span class="text-xs font-bold text-teal-400 uppercase tracking-wider">Gate Checkpoint Details</span>
-            <span id="active-do-pill" class="text-xs font-mono font-bold text-white px-2.5 py-0.5 rounded" style="background-color: #27272a;"></span>
+            <span class="text-xs sm:text-sm font-bold text-teal-400 uppercase tracking-wider">Gate Checkpoint Details</span>
+            <span id="active-do-pill" class="text-xs font-mono font-bold text-white px-2.5 py-1 rounded-md" style="background-color: #27272a;"></span>
         </div>
 
         <div>
-            <label class="block text-[11px] font-bold text-gray-300 mb-1">Verified Truck Plate Number</label>
+            <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Verified Truck Plate Number</label>
             <input 
                 type="text" 
                 id="gate-plate-input" 
-                class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-xs focus:outline-none"
+                class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base focus:outline-none"
                 style="background-color: #141417; border: 1px solid #3f3f46;"
             >
         </div>
 
         <div>
-            <label class="block text-[11px] font-bold text-gray-300 mb-1">Verified Driver Name</label>
+            <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Verified Driver Name</label>
             <input 
                 type="text" 
                 id="gate-driver-input" 
-                class="w-full px-3.5 py-2.5 rounded-xl text-white text-xs focus:outline-none"
+                class="laser-focus w-full h-13 px-4 rounded-xl text-white text-base focus:outline-none"
                 style="background-color: #141417; border: 1px solid #3f3f46;"
             >
         </div>
 
         <div>
-            <label class="block text-[11px] font-bold text-gray-300 mb-1">Container Security Seal Number</label>
+            <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Container Security Seal Number</label>
             <input 
                 type="text" 
                 id="gate-seal-input" 
                 placeholder="Scan or enter seal (e.g. SEAL-8891)" 
-                class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-xs focus:outline-none"
+                class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base focus:outline-none"
                 style="background-color: #141417; border: 1px solid #3f3f46;"
             >
         </div>
 
         <!-- Touchscreen Driver Signature Pad -->
         <div>
-            <div class="flex items-center justify-between mb-1">
-                <label class="text-[11px] font-bold text-gray-300">Driver Signature (Sign on glass)</label>
-                <button type="button" onclick="clearSignature()" class="text-[10px] text-gray-400 hover:text-white underline">
+            <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-bold text-gray-300 uppercase tracking-wide">Driver Signature (Sign on glass)</label>
+                <button type="button" onclick="clearSignature()" class="min-h-[44px] px-3 text-xs text-amber-400 hover:underline flex items-center font-bold">
                     Clear Pad
                 </button>
             </div>
-            <div class="rounded-xl overflow-hidden" style="background-color: #09090b; border: 1px solid #3f3f46;">
-                <canvas id="signature-pad" width="340" height="120" class="w-full h-28 cursor-crosshair touch-none"></canvas>
+            <div class="rounded-xl overflow-hidden shadow-inner" style="background-color: #09090b; border: 1px solid #3f3f46;">
+                <canvas id="signature-pad" width="340" height="140" class="w-full h-36 cursor-crosshair touch-none"></canvas>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
             type="button" 
             onclick="submitGateClearance()" 
             id="clear-gate-btn" 
-            class="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider text-black transition shadow-lg mt-2" 
+            class="w-full min-h-[54px] py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-black transition shadow-lg mt-2 active:scale-[0.98]" 
             style="background-color: #14b8a6; border: none;"
         >
             Authorize Gate Out & Issue Gate Pass

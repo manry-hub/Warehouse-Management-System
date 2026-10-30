@@ -36,7 +36,7 @@
                         </div>
                         <button 
                             onclick="selectDeliveryOrder('{{ $do->id }}', '{{ $do->do_number }}', {{ $do->total_cartons ?? 50 }})"
-                            class="px-3.5 py-2 rounded-xl bg-rose-600 active:bg-rose-700 text-white font-bold text-xs uppercase shadow"
+                            class="min-h-[44px] min-w-[76px] px-4 py-2.5 rounded-xl bg-rose-600 active:bg-rose-700 text-white font-bold text-xs uppercase shadow active:scale-95 transition flex items-center justify-center"
                             style="border: none;"
                         >
                             Load

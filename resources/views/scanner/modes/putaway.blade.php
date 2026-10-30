@@ -23,7 +23,7 @@
             >
             <button 
                 onclick="queryPutaway()" 
-                class="px-4 h-13 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs uppercase"
+                class="min-w-[90px] min-h-[52px] px-4 h-13 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs uppercase active:scale-95 transition flex items-center justify-center shadow"
                 style="border: none;"
             >
                 Find Bin

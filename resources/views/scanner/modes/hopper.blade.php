@@ -17,23 +17,24 @@
     </div>
 
     <!-- Mode Selector: Stage vs Return -->
+    <!-- Mode Selector: Stage vs Return (Touch targets >= 48px) -->
     <div class="flex space-x-2">
-        <button id="tab-stage" onclick="switchTab('stage')" class="flex-1 py-2.5 rounded-xl font-bold text-xs uppercase transition shadow" style="background-color: #06b6d4; color: #000; border: none;">
+        <button id="tab-stage" onclick="switchTab('stage')" class="flex-1 min-h-[48px] py-3 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider transition shadow active:scale-95" style="background-color: #06b6d4; color: #000; border: none;">
             Stage to Hopper
         </button>
-        <button id="tab-return" onclick="switchTab('return')" class="flex-1 py-2.5 rounded-xl font-bold text-xs uppercase transition shadow text-gray-400" style="background-color: #1e1e24; border: none;">
+        <button id="tab-return" onclick="switchTab('return')" class="flex-1 min-h-[48px] py-3 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider transition shadow text-gray-400 active:scale-95" style="background-color: #1e1e24; border: none;">
             Partial Return
         </button>
     </div>
 
     <!-- Section 1: Stage to Hopper Form -->
     <div id="section-stage" class="space-y-3">
-        <div class="rounded-2xl p-4 space-y-3 shadow-md" style="background-color: #1e1e24; border: none;">
+        <div class="rounded-2xl p-4 sm:p-5 space-y-4 shadow-md" style="background-color: #1e1e24; border: none;">
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Target Injection Machine</label>
-                <div class="grid grid-cols-3 gap-2">
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Target Injection Machine</label>
+                <div class="grid grid-cols-3 gap-2.5">
                     @foreach(['IMM-01', 'IMM-02', 'IMM-03', 'IMM-04', 'IMM-05', 'IMM-06'] as $imm)
-                        <button type="button" onclick="selectMachine('{{ $imm }}')" class="imm-btn py-2 rounded-xl text-xs font-mono font-bold text-gray-300 transition" style="background-color: #27272a; border: none;">
+                        <button type="button" onclick="selectMachine('{{ $imm }}')" class="imm-btn min-h-[48px] py-3 rounded-xl text-sm font-mono font-bold text-gray-300 transition active:scale-95" style="background-color: #27272a; border: none;">
                             {{ $imm }}
                         </button>
                     @endforeach
@@ -42,37 +43,37 @@
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Raw Material Lot Barcode</label>
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Raw Material Lot Barcode</label>
                 <div class="flex space-x-2">
                     <input 
                         type="text" 
                         id="raw-lot-input" 
                         placeholder="Scan or enter lot (e.g. LOT-PP-...)" 
-                        class="flex-1 px-3.5 py-2.5 rounded-xl text-white font-mono text-xs focus:outline-none"
+                        class="laser-focus flex-1 h-13 px-4 rounded-xl text-white font-mono text-base focus:outline-none"
                         style="background-color: #141417; border: 1px solid #3f3f46;"
                     >
-                    <button type="button" onclick="verifyRecipe()" class="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase shadow" style="background-color: #0891b2; border: none;">
+                    <button type="button" onclick="verifyRecipe()" class="min-h-[52px] px-5 rounded-xl font-bold text-xs sm:text-sm text-white uppercase shadow active:scale-95 transition" style="background-color: #0891b2; border: none;">
                         Verify
                     </button>
                 </div>
             </div>
 
             <!-- Verification Feedback Banner -->
-            <div id="verification-banner" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+            <div id="verification-banner" class="hidden p-3.5 rounded-xl text-xs sm:text-sm space-y-1"></div>
 
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Quantity to Stage (KG)</label>
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Quantity to Stage (KG)</label>
                 <input 
                     type="number" 
                     id="stage-qty-input" 
                     step="0.01" 
                     value="25.00" 
-                    class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-sm focus:outline-none"
+                    class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base font-bold text-cyan-400 focus:outline-none"
                     style="background-color: #141417; border: 1px solid #3f3f46;"
                 >
             </div>
 
-            <button type="button" onclick="submitHopperStage()" id="submit-stage-btn" class="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider text-black transition shadow-lg" style="background-color: #06b6d4; border: none;">
+            <button type="button" onclick="submitHopperStage()" id="submit-stage-btn" class="w-full min-h-[54px] py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-black transition shadow-lg active:scale-[0.98]" style="background-color: #06b6d4; border: none;">
                 Authorize & Stage to Hopper
             </button>
         </div>
@@ -80,42 +81,42 @@
 
     <!-- Section 2: Partial Return Form -->
     <div id="section-return" class="hidden space-y-3">
-        <div class="rounded-2xl p-4 space-y-3 shadow-md" style="background-color: #1e1e24; border: none;">
+        <div class="rounded-2xl p-4 sm:p-5 space-y-4 shadow-md" style="background-color: #1e1e24; border: none;">
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Hopper Transaction Code</label>
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Hopper Transaction Code</label>
                 <input 
                     type="text" 
                     id="return-tx-code" 
                     placeholder="Scan or enter HOP-... code" 
-                    class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-xs focus:outline-none"
+                    class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base focus:outline-none"
                     style="background-color: #141417; border: 1px solid #3f3f46;"
                 >
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Actual Weighed Returned Weight (KG)</label>
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Actual Weighed Returned Weight (KG)</label>
                 <input 
                     type="number" 
                     id="return-weight-input" 
                     step="0.01" 
                     placeholder="e.g. 14.50" 
-                    class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-sm focus:outline-none"
+                    class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base font-bold text-cyan-400 focus:outline-none"
                     style="background-color: #141417; border: 1px solid #3f3f46;"
                 >
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-gray-300 mb-1">Target Raw Material Bin (Optional)</label>
+                <label class="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wide">Target Raw Material Bin (Optional)</label>
                 <input 
                     type="text" 
                     id="return-bin-code" 
                     placeholder="Leave empty for auto-assign in ZONE-RM" 
-                    class="w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-xs focus:outline-none"
+                    class="laser-focus w-full h-13 px-4 rounded-xl text-white font-mono text-base focus:outline-none"
                     style="background-color: #141417; border: 1px solid #3f3f46;"
                 >
             </div>
 
-            <button type="button" onclick="submitHopperReturn()" id="submit-return-btn" class="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider text-black transition shadow-lg" style="background-color: #10b981; border: none;">
+            <button type="button" onclick="submitHopperReturn()" id="submit-return-btn" class="w-full min-h-[54px] py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-black transition shadow-lg active:scale-[0.98]" style="background-color: #10b981; border: none;">
                 Deposit Return & Generate Label
             </button>
         </div>

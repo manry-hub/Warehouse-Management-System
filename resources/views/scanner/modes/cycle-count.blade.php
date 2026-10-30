@@ -33,7 +33,7 @@
                         </div>
                         <button 
                             onclick="loadCountSheet('{{ $order->id }}', '{{ $order->count_number }}')"
-                            class="px-3.5 py-2 rounded-xl bg-purple-600 active:bg-purple-700 text-white font-bold text-xs uppercase shadow"
+                            class="min-h-[44px] min-w-[85px] px-4 py-2.5 rounded-xl bg-purple-600 active:bg-purple-700 text-white font-bold text-xs uppercase shadow active:scale-95 transition flex items-center justify-center"
                             style="border: none;"
                         >
                             Open Sheet

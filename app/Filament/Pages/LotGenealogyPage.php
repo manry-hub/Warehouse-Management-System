@@ -15,7 +15,7 @@ class LotGenealogyPage extends Page
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $title = 'IATF 16949 Lot Genealogy & Recall';
+    protected static ?string $title = 'Lot Genealogy & Recall';
 
     protected static ?string $slug = 'lot-genealogy';
 

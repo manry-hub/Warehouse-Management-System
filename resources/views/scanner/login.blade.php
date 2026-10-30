@@ -84,14 +84,14 @@
     <!-- Quick Operator Profiles for Factory Testing (Grayish, borderless) -->
     <div class="mt-6 text-center">
         <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Preset Badges</p>
-        <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="fillCreds('handler@wms.local', 'password')" class="px-3 py-2.5 rounded-xl text-left text-gray-300 active:scale-95 transition" style="background-color: #1e1e24; border: none;">
+        <div class="grid grid-cols-2 gap-2.5">
+            <button type="button" onclick="fillCreds('handler@wms.local', 'password')" class="min-h-[52px] p-3 rounded-xl text-left text-gray-300 active:scale-95 transition bg-[#1e1e24] hover:bg-[#27272f] border border-white/5" style="border: none;">
                 <div class="text-xs font-bold text-white">Floor Handler</div>
-                <div class="text-[10px] text-gray-400 font-mono">handler@wms.local</div>
+                <div class="text-[10px] text-gray-400 font-mono truncate">handler@wms.local</div>
             </button>
-            <button type="button" onclick="fillCreds('admin@wms.local', 'password')" class="px-3 py-2.5 rounded-xl text-left text-gray-300 active:scale-95 transition" style="background-color: #1e1e24; border: none;">
+            <button type="button" onclick="fillCreds('admin@wms.local', 'password')" class="min-h-[52px] p-3 rounded-xl text-left text-gray-300 active:scale-95 transition bg-[#1e1e24] hover:bg-[#27272f] border border-white/5" style="border: none;">
                 <div class="text-xs font-bold text-white">Manager</div>
-                <div class="text-[10px] text-gray-400 font-mono">admin@wms.local</div>
+                <div class="text-[10px] text-gray-400 font-mono truncate">admin@wms.local</div>
             </button>
         </div>
     </div>
