@@ -89,9 +89,19 @@ class MaterialLot extends Model
         return $this->hasMany(InventoryBalance::class);
     }
 
+    public function inventoryBalances(): HasMany
+    {
+        return $this->balances();
+    }
+
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function deliveryOrderItems(): HasMany
+    {
+        return $this->hasMany(DeliveryOrderItem::class);
     }
 
     public function isAvailable(): bool

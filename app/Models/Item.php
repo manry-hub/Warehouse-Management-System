@@ -46,6 +46,16 @@ class Item extends Model
         return (bool) $this->allow_regrind;
     }
 
+    public function isRawMaterial(): bool
+    {
+        return in_array($this->category, [self::CATEGORY_RAW_RESIN, self::CATEGORY_MASTERBATCH]);
+    }
+
+    public function isFinishedGood(): bool
+    {
+        return $this->category === self::CATEGORY_FINISHED_GOOD;
+    }
+
     public function getMaxRegrindRatio(): float
     {
         return $this->allowsRegrind() ? (float) $this->max_regrind_percentage : 0.0;

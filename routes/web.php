@@ -26,5 +26,7 @@ Route::prefix('scanner')->group(function () {
         Route::get('/regrind', [ScannerWebController::class, 'regrind'])->name('regrind');
         Route::get('/cycle-count', [ScannerWebController::class, 'cycleCount'])->name('cycle-count');
         Route::get('/shipping', [ScannerWebController::class, 'shipping'])->name('shipping');
+        Route::get('/hopper', [ScannerWebController::class, 'hopper'])->name('hopper');
+        Route::get('/gate-pass', [ScannerWebController::class, 'gatePass'])->name('gate-pass');
     });
 });

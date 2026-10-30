@@ -119,6 +119,38 @@
             </div>
         </a>
 
+        <!-- 7. Hopper Feeding & Verification -->
+        <a href="{{ route('scanner.hopper') }}" class="group relative flex flex-col justify-between p-4 rounded-2xl active:scale-[0.98] transition-all shadow-md min-h-[115px]" style="background-color: #1e1e24; border: none;">
+            <div class="flex items-start justify-between">
+                <div class="p-2.5 rounded-xl text-cyan-400" style="background-color: rgba(6, 182, 212, 0.15);">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </div>
+                <span class="text-[9px] font-bold text-gray-400 px-2 py-0.5 rounded" style="background-color: #141417;">MODE 7</span>
+            </div>
+            <div class="mt-2.5">
+                <h3 class="text-sm font-bold text-white group-hover:text-cyan-300">Hopper Feed</h3>
+                <p class="text-[10px] text-gray-400">Recipe verify & return</p>
+            </div>
+        </a>
+
+        <!-- 8. Security Gate Pass -->
+        <a href="{{ route('scanner.gate-pass') }}" class="group relative flex flex-col justify-between p-4 rounded-2xl active:scale-[0.98] transition-all shadow-md min-h-[115px]" style="background-color: #1e1e24; border: none;">
+            <div class="flex items-start justify-between">
+                <div class="p-2.5 rounded-xl text-teal-400" style="background-color: rgba(20, 184, 166, 0.15);">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <span class="text-[9px] font-bold text-gray-400 px-2 py-0.5 rounded" style="background-color: #141417;">MODE 8</span>
+            </div>
+            <div class="mt-2.5">
+                <h3 class="text-sm font-bold text-white group-hover:text-teal-300">Security Gate</h3>
+                <p class="text-[10px] text-gray-400">Driver e-sign clearance</p>
+            </div>
+        </a>
+
     </div>
 
     <!-- Quick Audio Test Bar (Grayish, borderless) -->

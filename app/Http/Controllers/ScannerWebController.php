@@ -163,4 +163,28 @@ class ScannerWebController extends Controller
 
         return view('scanner.modes.shipping', compact('deliveryOrders'));
     }
+
+    /**
+     * Mode 7: Machine Hopper Staging & Recipe Verification.
+     */
+    public function hopper(): View
+    {
+        return view('scanner.modes.hopper');
+    }
+
+    /**
+     * Mode 8: Outbound Security Gate Pass Clearance.
+     */
+    public function gatePass(): View
+    {
+        $pendingOrders = DeliveryOrder::whereIn('status', [
+            DeliveryOrder::STATUS_LOADED,
+            DeliveryOrder::STATUS_DISPATCHED,
+        ])
+            ->whereNull('gate_pass_number')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('scanner.modes.gate-pass', compact('pendingOrders'));
+    }
 }
