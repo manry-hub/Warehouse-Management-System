@@ -5,66 +5,70 @@
 
 @section('content')
 <div class="space-y-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-3">
+    <div class="rounded-2xl p-4 shadow-md" style="background-color: #18181b; border: none;">
+        <div class="flex items-center justify-between pb-3 mb-3">
             <span class="text-xs font-bold text-sky-400 uppercase tracking-wider">Inbound Dock Receiving</span>
-            <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded">Scan PO or Enter</span>
+            <span class="text-[10px] text-gray-400 px-2.5 py-1 rounded-md" style="background-color: #27272a;">Scan PO or Enter</span>
         </div>
 
         <form id="receiving-form" onsubmit="submitReceiving(event)" class="space-y-3">
             <div>
-                <label class="block text-xs font-bold text-slate-300 uppercase mb-1">PO Number / Manifest</label>
+                <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">PO Number / Manifest</label>
                 <input 
                     type="text" 
                     id="po_number" 
                     required 
                     data-scan-target="true"
                     placeholder="e.g. PO-2026-8801"
-                    class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-base uppercase focus:outline-none focus:border-sky-500"
+                    class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-base uppercase"
+                    style="background-color: #27272a; border: none; outline: none;"
                 >
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Material SKU</label>
-                    <select id="sku" required class="laser-focus w-full h-12 px-2.5 rounded-xl bg-slate-900 border border-slate-600 text-white text-sm focus:outline-none focus:border-sky-500">
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Material SKU</label>
+                    <select id="sku" required class="laser-focus w-full h-12 px-3 rounded-xl text-white text-sm" style="background-color: #27272a; border: none; outline: none;">
                         @foreach($items as $item)
                             <option value="{{ $item->sku }}">{{ $item->sku }} ({{ $item->unit_of_measure }})</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vendor Code</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Vendor Code</label>
                     <input 
                         type="text" 
                         id="vendor_code" 
                         required 
                         value="VEND-LOTTE"
                         placeholder="VEND-001"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white text-sm focus:outline-none focus:border-sky-500"
+                        class="laser-focus w-full h-12 px-3.5 rounded-xl text-white text-sm"
+                        style="background-color: #27272a; border: none; outline: none;"
                     >
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Heat / Batch #</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Heat / Batch #</label>
                     <input 
                         type="text" 
                         id="vendor_heat_number" 
                         placeholder="HEAT-9921"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-sm focus:outline-none focus:border-sky-500"
+                        class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-sm"
+                        style="background-color: #27272a; border: none; outline: none;"
                     >
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Quantity (KG)</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Quantity (KG)</label>
                     <input 
                         type="number" 
                         step="0.01" 
                         id="quantity_kg" 
                         required 
                         value="500.00"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-base font-bold text-sky-400 focus:outline-none focus:border-sky-500"
+                        class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-base font-bold text-sky-400"
+                        style="background-color: #27272a; border: none; outline: none;"
                     >
                 </div>
             </div>
@@ -72,7 +76,8 @@
             <button 
                 type="submit" 
                 id="submit-btn"
-                class="w-full h-14 mt-2 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold text-base tracking-wider uppercase shadow-lg shadow-sky-600/30 flex items-center justify-center space-x-2 transition-all active:scale-[0.98]"
+                class="w-full h-14 mt-3 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold text-base tracking-wider uppercase shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.98]"
+                style="border: none;"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -83,20 +88,20 @@
     </div>
 
     <!-- Label Preview Modal (Populated on Receive) -->
-    <div id="label-modal" class="hidden bg-slate-800 border-2 border-emerald-500/60 rounded-xl p-4 space-y-3 shadow-2xl">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+    <div id="label-modal" class="hidden rounded-2xl p-4 space-y-3 shadow-2xl" style="background-color: #1e1e24; border: none;">
+        <div class="flex items-center justify-between pb-2 mb-2">
             <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Lot Generated (QA Hold)</span>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-white">&times;</button>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1 text-lg">&times;</button>
         </div>
-        <div class="text-center bg-white p-3 rounded-lg flex flex-col items-center justify-center">
+        <div class="text-center p-4 rounded-xl flex flex-col items-center justify-center shadow-inner" style="background-color: #ffffff;">
             <div id="qr-container" class="w-40 h-40 flex items-center justify-center"></div>
-            <div id="lot-number-text" class="text-xs font-mono font-black text-black mt-1"></div>
+            <div id="lot-number-text" class="text-xs font-mono font-black text-black mt-2"></div>
         </div>
-        <div class="flex space-x-2">
-            <button onclick="printZpl()" class="flex-1 h-12 rounded-lg bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs uppercase flex items-center justify-center space-x-1">
+        <div class="flex space-x-2 pt-1">
+            <button onclick="printZpl()" class="flex-1 h-12 rounded-xl bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs uppercase flex items-center justify-center space-x-1" style="border: none;">
                 <span>Print ZPL Thermal</span>
             </button>
-            <button onclick="closeModal()" class="px-4 h-12 rounded-lg bg-slate-700 active:bg-slate-600 text-white font-bold text-xs uppercase">
+            <button onclick="closeModal()" class="px-5 h-12 rounded-xl text-white font-bold text-xs uppercase" style="background-color: #27272a; border: none;">
                 Next
             </button>
         </div>

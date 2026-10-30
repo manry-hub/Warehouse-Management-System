@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             WarehouseTopologySeeder::class,
             ItemCatalogSeeder::class,
+            RealisticOperationsSeeder::class,
         ]);
     }
 }

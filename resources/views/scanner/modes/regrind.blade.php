@@ -5,16 +5,16 @@
 
 @section('content')
 <div class="space-y-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-3">
+    <div class="rounded-2xl p-4 shadow-md" style="background-color: #18181b; border: none;">
+        <div class="flex items-center justify-between pb-3 mb-3">
             <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Granulator Runner Scrap</span>
-            <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded">Gen 1 Only</span>
+            <span class="text-[10px] text-gray-400 px-2.5 py-1 rounded-md" style="background-color: #27272a;">Gen 1 Only</span>
         </div>
 
         <form onsubmit="submitRegrind(event)" class="space-y-3">
             <div>
-                <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Target Polymer SKU</label>
-                <select id="regrind_sku" required class="laser-focus w-full h-12 px-2.5 rounded-xl bg-slate-900 border border-slate-600 text-white text-sm focus:outline-none focus:border-amber-500">
+                <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Target Polymer SKU</label>
+                <select id="regrind_sku" required class="laser-focus w-full h-12 px-3 rounded-xl text-white text-sm" style="background-color: #27272a; border: none; outline: none;">
                     @foreach($items as $item)
                         <option value="{{ $item->sku }}">{{ $item->sku }} (Max {{ $item->max_regrind_percentage }}%)</option>
                     @endforeach
@@ -23,88 +23,93 @@
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Source IMM</label>
-                    <select id="machine_code" required class="laser-focus w-full h-12 px-2.5 rounded-xl bg-slate-900 border border-slate-600 text-white text-sm focus:outline-none focus:border-amber-500">
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Source IMM</label>
+                    <select id="machine_code" required class="laser-focus w-full h-12 px-3 rounded-xl text-white text-sm" style="background-color: #27272a; border: none; outline: none;">
                         @for($i = 1; $i <= 12; $i++)
                             <option value="IMM-{{ sprintf('%02d', $i) }}">IMM-{{ sprintf('%02d', $i) }}</option>
                         @endfor
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Net Weight (KG)</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Net Weight (KG)</label>
                     <input 
                         type="number" 
                         step="0.01" 
                         id="regrind_weight" 
                         required 
                         value="35.00"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-base font-bold text-amber-400 focus:outline-none focus:border-amber-500"
+                        class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-base font-bold text-amber-400"
+                        style="background-color: #27272a; border: none; outline: none;"
                     >
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Parent Virgin Lot (Optional)</label>
+                <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Parent Virgin Lot (Optional)</label>
                 <input 
                     type="text" 
                     id="parent_lot_number" 
                     data-scan-target="true"
                     placeholder="Scan Parent Lot Barcode"
-                    class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-sm uppercase focus:outline-none focus:border-amber-500"
+                    class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-sm uppercase"
+                    style="background-color: #27272a; border: none; outline: none;"
                 >
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Production Order</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Production Order</label>
                     <input 
                         type="text" 
-                        id="production_order" 
-                        placeholder="PO-MES-1001"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-xs uppercase focus:outline-none focus:border-amber-500"
+                        id="prod_order" 
+                        value="WO-2026-001"
+                        placeholder="WO-..."
+                        class="laser-focus w-full h-12 px-3.5 rounded-xl text-white font-mono text-sm"
+                        style="background-color: #27272a; border: none; outline: none;"
                     >
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Destination Bin</label>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1.5">Intake Granulator Bin</label>
                     <input 
                         type="text" 
-                        id="regrind_bin_code" 
-                        required 
+                        id="dest_bin" 
+                        readonly 
                         value="RM-A-01-11"
-                        placeholder="RM-A-01-11"
-                        class="laser-focus w-full h-12 px-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-xs uppercase focus:outline-none focus:border-amber-500"
+                        class="w-full h-12 px-3.5 rounded-xl text-amber-300 font-mono text-sm"
+                        style="background-color: #141417; border: none;"
                     >
                 </div>
             </div>
 
             <button 
                 type="submit" 
-                id="regrind-submit-btn"
-                class="w-full h-14 mt-2 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-base tracking-wider uppercase shadow-lg shadow-amber-600/30 flex items-center justify-center space-x-2 transition-all active:scale-[0.98]"
+                id="regrind-btn"
+                class="w-full h-14 mt-3 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base tracking-wider uppercase shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.98]"
+                style="border: none;"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>Intake Regrind & Print Label</span>
+                <span>Intake Regrind & Print QR</span>
             </button>
         </form>
     </div>
 
-    <!-- Generated Regrind Label Modal -->
-    <div id="regrind-label-modal" class="hidden bg-slate-800 border-2 border-amber-500/60 rounded-xl p-4 space-y-3 shadow-2xl">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700">
-            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Regrind Pallet Label</span>
-            <button onclick="closeRegrindModal()" class="text-slate-400 hover:text-white">&times;</button>
+    <!-- Regrind Label Modal (Grayish fill, borderless) -->
+    <div id="regrind-modal" class="hidden rounded-2xl p-4 space-y-3 shadow-2xl" style="background-color: #1e1e24; border: none;">
+        <div class="flex items-center justify-between pb-2 mb-2">
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Regrind Lot Generated (Gen 1)</span>
+            <button onclick="closeRegrindModal()" class="text-gray-400 hover:text-white p-1 text-lg">&times;</button>
         </div>
-        <div class="text-center bg-white p-3 rounded-lg flex flex-col items-center justify-center">
+        <div class="text-center p-4 rounded-xl flex flex-col items-center justify-center shadow-inner" style="background-color: #ffffff;">
             <div id="regrind-qr-container" class="w-40 h-40 flex items-center justify-center"></div>
-            <div id="regrind-lot-text" class="text-xs font-mono font-black text-black mt-1"></div>
+            <div id="regrind-lot-text" class="text-xs font-mono font-black text-black mt-2"></div>
         </div>
-        <div class="flex space-x-2">
-            <button onclick="printRegrindZpl()" class="flex-1 h-12 rounded-lg bg-amber-600 active:bg-amber-700 text-white font-bold text-xs uppercase">
-                Print ZPL Thermal
+        <div class="flex space-x-2 pt-1">
+            <button onclick="printZpl()" class="flex-1 h-12 rounded-xl bg-amber-500 text-slate-950 font-black text-xs uppercase flex items-center justify-center space-x-1" style="border: none;">
+                <span>Print Thermal ZPL</span>
             </button>
-            <button onclick="closeRegrindModal()" class="px-4 h-12 rounded-lg bg-slate-700 active:bg-slate-600 text-white font-bold text-xs uppercase">
+            <button onclick="closeRegrindModal()" class="px-5 h-12 rounded-xl text-white font-bold text-xs uppercase" style="background-color: #27272a; border: none;">
                 Done
             </button>
         </div>
@@ -114,9 +119,9 @@
 <script>
     async function submitRegrind(e) {
         e.preventDefault();
-        const btn = document.getElementById('regrind-submit-btn');
+        const btn = document.getElementById('regrind-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span>Creating Regrind Lot...</span>';
+        btn.innerHTML = '<span>Granulating Scrap...</span>';
 
         try {
             const res = await fetch('/api/v1/scanner/regrind/intake', {
@@ -128,39 +133,39 @@
                 },
                 body: JSON.stringify({
                     item_sku: document.getElementById('regrind_sku').value,
-                    quantity_kg: parseFloat(document.getElementById('regrind_weight').value),
-                    bin_code: document.getElementById('regrind_bin_code').value.trim(),
-                    machine_code: document.getElementById('machine_code').value,
+                    source_machine: document.getElementById('machine_code').value,
+                    weight_kg: parseFloat(document.getElementById('regrind_weight').value),
                     parent_lot_number: document.getElementById('parent_lot_number').value.trim() || null,
-                    production_order: document.getElementById('production_order').value.trim() || null
+                    production_order_number: document.getElementById('prod_order').value.trim() || null,
+                    destination_bin_code: document.getElementById('dest_bin').value.trim()
                 })
             });
 
             const data = await res.json();
             if (res.ok && data.success) {
-                showToast(`Regrind Lot ${data.data.lot_number} Created!`, true);
+                showToast(`Regrind Lot ${data.data.lot_number} generated!`, true);
                 document.getElementById('regrind-qr-container').innerHTML = data.data.qr_svg;
                 document.getElementById('regrind-lot-text').textContent = data.data.lot_number;
-                document.getElementById('regrind-label-modal').classList.remove('hidden');
+                document.getElementById('regrind-modal').classList.remove('hidden');
                 document.getElementById('parent_lot_number').value = '';
             } else {
-                showToast(data.message || 'Regrind intake failed', false);
+                showToast(data.message || 'Regrind rejected (Check Gen 2 guard)', false);
             }
-        } catch (err) {
-            showToast('Network error during regrind intake', false);
+        } catch(err) {
+            showToast('Regrind intake server communication failed', false);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span>Intake Regrind & Print Label</span>';
+            btn.innerHTML = '<span>Intake Regrind & Print QR</span>';
         }
     }
 
     function closeRegrindModal() {
-        document.getElementById('regrind-label-modal').classList.add('hidden');
-        document.getElementById('regrind_weight').focus();
+        document.getElementById('regrind-modal').classList.add('hidden');
+        document.getElementById('parent_lot_number').focus();
     }
 
-    function printRegrindZpl() {
-        showToast('Thermal label dispatched to printer!', true);
+    function printZpl() {
+        showToast('ZPL stream sent to granulator thermal printer', true);
     }
 </script>
 @endsection
