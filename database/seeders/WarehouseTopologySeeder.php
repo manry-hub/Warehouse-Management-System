@@ -45,6 +45,12 @@ class WarehouseTopologySeeder extends Seeder
                 'zone_type' => WarehouseZone::TYPE_QUARANTINE,
                 'is_temperature_controlled' => true,
             ],
+            [
+                'code' => 'ZONE-SILO',
+                'name' => 'Bulk Resin Outdoor Silo Farm',
+                'zone_type' => WarehouseZone::TYPE_SILO,
+                'is_temperature_controlled' => false,
+            ],
         ];
 
         foreach ($zones as $zoneData) {
@@ -94,6 +100,23 @@ class WarehouseTopologySeeder extends Seeder
                         ]
                     );
                 }
+            } elseif ($zone->code === 'ZONE-SILO') {
+                for ($s = 1; $s <= 3; $s++) {
+                    $binCode = sprintf('SILO-BIN-%02d', $s);
+                    WarehouseBin::firstOrCreate(
+                        ['bin_code' => $binCode],
+                        [
+                            'zone_id' => $zone->id,
+                            'aisle' => 'SILO',
+                            'rack' => sprintf('BAY-%02d', $s),
+                            'shelf' => '1',
+                            'bin' => '1',
+                            'max_weight_kg' => 60000.00,
+                            'max_volume_cbm' => 120.00,
+                            'is_blocked' => false,
+                        ]
+                    );
+                }
             } elseif ($zone->code === 'ZONE-FG') {
                 for ($rack = 1; $rack <= 2; $rack++) {
                     for ($shelf = 1; $shelf <= 2; $shelf++) {
@@ -126,6 +149,23 @@ class WarehouseTopologySeeder extends Seeder
                             'bin' => (string) $q,
                             'max_weight_kg' => 1000.00,
                             'max_volume_cbm' => 2.00,
+                            'is_blocked' => false,
+                        ]
+                    );
+                }
+            } elseif ($zone->code === 'ZONE-SILO') {
+                for ($s = 1; $s <= 3; $s++) {
+                    $binCode = sprintf('SILO-BIN-%02d', $s);
+                    WarehouseBin::firstOrCreate(
+                        ['bin_code' => $binCode],
+                        [
+                            'zone_id' => $zone->id,
+                            'aisle' => 'SILO',
+                            'rack' => sprintf('BAY-%02d', $s),
+                            'shelf' => '1',
+                            'bin' => '1',
+                            'max_weight_kg' => 60000.00,
+                            'max_volume_cbm' => 120.00,
                             'is_blocked' => false,
                         ]
                     );

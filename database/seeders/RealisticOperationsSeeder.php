@@ -9,6 +9,8 @@ use App\Models\DeliveryOrderItem;
 use App\Models\InventoryBalance;
 use App\Models\Item;
 use App\Models\MaterialLot;
+use App\Models\Silo;
+use App\Models\SiloTelemetryReading;
 use App\Models\StagingRequest;
 use App\Models\StagingRequestItem;
 use App\Models\User;
@@ -16,6 +18,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseBin;
 use App\Models\WarehouseZone;
 use App\Services\InventoryMovementService;
+use App\Services\SiloTelemetryService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -485,5 +488,166 @@ class RealisticOperationsSeeder extends Seeder
                 ]
             );
         }
+
+        // -------------------------------------------------------------
+        // STEP 7: Seed Bulk Resin Silos and Telemetry Time Series
+        // -------------------------------------------------------------
+        $zoneSilo = WarehouseZone::firstOrCreate(
+            ['warehouse_id' => $warehouse->id, 'code' => 'ZONE-SILO'],
+            [
+                'name' => 'Bulk Resin Outdoor Silo Farm',
+                'zone_type' => WarehouseZone::TYPE_SILO,
+                'is_temperature_controlled' => false,
+            ]
+        );
+
+        $binSilo1 = WarehouseBin::firstOrCreate(
+            ['bin_code' => 'SILO-BIN-01'],
+            [
+                'zone_id' => $zoneSilo->id,
+                'aisle' => 'SILO',
+                'rack' => 'BAY-01',
+                'shelf' => '1',
+                'bin' => '1',
+                'max_weight_kg' => 60000.00,
+                'max_volume_cbm' => 120.00,
+            ]
+        );
+
+        $binSilo2 = WarehouseBin::firstOrCreate(
+            ['bin_code' => 'SILO-BIN-02'],
+            [
+                'zone_id' => $zoneSilo->id,
+                'aisle' => 'SILO',
+                'rack' => 'BAY-02',
+                'shelf' => '1',
+                'bin' => '1',
+                'max_weight_kg' => 50000.00,
+                'max_volume_cbm' => 100.00,
+            ]
+        );
+
+        $binSilo3 = WarehouseBin::firstOrCreate(
+            ['bin_code' => 'SILO-BIN-03'],
+            [
+                'zone_id' => $zoneSilo->id,
+                'aisle' => 'SILO',
+                'rack' => 'BAY-03',
+                'shelf' => '1',
+                'bin' => '1',
+                'max_weight_kg' => 40000.00,
+                'max_volume_cbm' => 80.00,
+            ]
+        );
+
+        $siloService = app(SiloTelemetryService::class);
+
+        // 1. Silo PP-01 (Normal Operating Level)
+        $siloPp = Silo::firstOrCreate(
+            ['code' => 'SILO-PP-01'],
+            [
+                'warehouse_id' => $warehouse->id,
+                'zone_id' => $zoneSilo->id,
+                'bin_id' => $binSilo1->id,
+                'item_id' => $itemPp->id,
+                'name' => 'Polypropylene Homopolymer Bulk Silo #1',
+                'total_height_m' => 12.00,
+                'diameter_m' => 3.50,
+                'cone_height_m' => 2.00,
+                'sensor_deadband_m' => 0.50,
+                'bulk_density_kg_m3' => 520.00,
+                'max_capacity_kg' => 50000.00,
+                'reorder_threshold_kg' => 12000.00,
+                'critical_threshold_kg' => 5000.00,
+                'is_active' => true,
+            ]
+        );
+
+        $siloService->ingestReading(
+            silo: $siloPp,
+            distanceMeters: 4.80,
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 28.5,
+            recordedAt: Carbon::now()->subDays(2)
+        );
+        $siloService->ingestReading(
+            silo: $siloPp,
+            distanceMeters: 5.20,
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 27.8,
+            recordedAt: Carbon::now()->subDay()
+        );
+        $siloService->ingestReading(
+            silo: $siloPp,
+            distanceMeters: 5.65,
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 29.1,
+            recordedAt: Carbon::now()->subMinutes(15)
+        );
+
+        // 2. Silo ABS-01 (Below Reorder Point -> Auto PR Triggered)
+        $siloAbs = Silo::firstOrCreate(
+            ['code' => 'SILO-ABS-01'],
+            [
+                'warehouse_id' => $warehouse->id,
+                'zone_id' => $zoneSilo->id,
+                'bin_id' => $binSilo2->id,
+                'item_id' => $itemAbs->id,
+                'name' => 'ABS High-Impact Granulate Silo #2',
+                'total_height_m' => 10.00,
+                'diameter_m' => 3.20,
+                'cone_height_m' => 1.80,
+                'sensor_deadband_m' => 0.50,
+                'bulk_density_kg_m3' => 620.00,
+                'max_capacity_kg' => 42000.00,
+                'reorder_threshold_kg' => 11000.00,
+                'critical_threshold_kg' => 4500.00,
+                'is_active' => true,
+            ]
+        );
+
+        $siloService->ingestReading(
+            silo: $siloAbs,
+            distanceMeters: 7.20,
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 26.0,
+            recordedAt: Carbon::now()->subDays(1)
+        );
+        $siloService->ingestReading(
+            silo: $siloAbs,
+            distanceMeters: 8.25, // drops to ~9,200 kg < 11,000 kg threshold -> triggers PR
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 25.4,
+            recordedAt: Carbon::now()->subMinutes(30)
+        );
+
+        // 3. Silo PC-01 (High Level Optical Grade Polycarbonate)
+        $siloPc = Silo::firstOrCreate(
+            ['code' => 'SILO-PC-01'],
+            [
+                'warehouse_id' => $warehouse->id,
+                'zone_id' => $zoneSilo->id,
+                'bin_id' => $binSilo3->id,
+                'item_id' => $itemPc->id,
+                'name' => 'Polycarbonate Optical Grade Bulk Silo #3',
+                'total_height_m' => 8.00,
+                'diameter_m' => 2.80,
+                'cone_height_m' => 1.50,
+                'sensor_deadband_m' => 0.40,
+                'bulk_density_kg_m3' => 700.00,
+                'max_capacity_kg' => 30000.00,
+                'reorder_threshold_kg' => 8000.00,
+                'critical_threshold_kg' => 3000.00,
+                'is_active' => true,
+            ]
+        );
+
+        $siloService->ingestReading(
+            silo: $siloPc,
+            distanceMeters: 2.80,
+            sensorType: SiloTelemetryReading::SENSOR_RADAR_80GHZ,
+            temperatureC: 24.2,
+            recordedAt: Carbon::now()->subMinutes(5)
+        );
     }
 }

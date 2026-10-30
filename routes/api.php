@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\ScannerInboundController;
 use App\Http\Controllers\Api\ScannerPickingController;
 use App\Http\Controllers\Api\ScannerRegrindController;
 use App\Http\Controllers\Api\ScannerShippingController;
+use App\Http\Controllers\Api\SiloTelemetryController;
 use App\Http\Middleware\VerifyMesWebhookSignature;
+use App\Http\Middleware\VerifySiloTelemetryApiKey;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -41,4 +43,8 @@ Route::prefix('v1')->group(function () {
     // Inbound MES Integration Webhook (secured by HMAC SHA-256)
     Route::post('/webhooks/mes', [MesWebhookController::class, 'handle'])
         ->middleware(VerifyMesWebhookSignature::class);
+
+    // Silo Telemetry Ingestion (secured by X-Telemetry-Key or Sanctum)
+    Route::post('/telemetry/silo-reading', [SiloTelemetryController::class, 'store'])
+        ->middleware(VerifySiloTelemetryApiKey::class);
 });

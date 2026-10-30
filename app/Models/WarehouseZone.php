@@ -20,6 +20,8 @@ class WarehouseZone extends Model
 
     public const TYPE_QUARANTINE = 'QUARANTINE';
 
+    public const TYPE_SILO = 'SILO';
+
     protected $fillable = [
         'warehouse_id',
         'code',

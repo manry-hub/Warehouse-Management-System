@@ -41,4 +41,8 @@ return [
         'webhook_secret' => env('MES_WEBHOOK_SECRET', 'test-mes-secret-key'),
     ],
 
+    'silo' => [
+        'telemetry_key' => env('SILO_TELEMETRY_API_KEY', 'wms-silo-telemetry-secret-key'),
+    ],
+
 ];
