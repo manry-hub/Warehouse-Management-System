@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\InventoryBalance;
@@ -10,7 +12,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseBin;
 use App\Models\WarehouseZone;
-use App\Services\FefoAllocationService;
+use App\Services\FifoAllocationService;
 use App\Services\InventoryMovementService;
 use App\Services\RegrindService;
 use Database\Seeders\ItemCatalogSeeder;
@@ -27,7 +29,7 @@ class RegrindAndBlendCapTest extends TestCase
 
     protected RegrindService $regrindService;
 
-    protected FefoAllocationService $fefoService;
+    protected FifoAllocationService $fifoService;
 
     protected InventoryMovementService $movementService;
 
@@ -53,7 +55,7 @@ class RegrindAndBlendCapTest extends TestCase
         $this->seed(ItemCatalogSeeder::class);
 
         $this->regrindService = app(RegrindService::class);
-        $this->fefoService = app(FefoAllocationService::class);
+        $this->fifoService = app(FifoAllocationService::class);
         $this->movementService = app(InventoryMovementService::class);
 
         $this->warehouse = Warehouse::where('code', 'WH-MAIN')->firstOrFail();
@@ -153,7 +155,7 @@ class RegrindAndBlendCapTest extends TestCase
         );
     }
 
-    public function test_fefo_allocation_enforces_max_regrind_blend_cap(): void
+    public function test_fifo_allocation_enforces_max_regrind_blend_cap(): void
     {
         // PP Resin: allow_regrind = true, max_regrind_percentage = 15.00%
         $this->assertTrue($this->ppResin->allowsRegrind());
@@ -191,7 +193,7 @@ class RegrindAndBlendCapTest extends TestCase
 
         // 3. Request 1,000 KG staging allocation
         // Blend cap is 15% -> Max regrind = 150 KG, Virgin = 850 KG
-        $allocations = $this->fefoService->allocate($this->ppResin, 1000.0);
+        $allocations = $this->fifoService->allocate($this->ppResin, 1000.0);
 
         $totalAllocated = array_sum(array_column($allocations, 'quantity'));
         $this->assertEquals(1000.0, $totalAllocated);
@@ -205,7 +207,7 @@ class RegrindAndBlendCapTest extends TestCase
         $this->assertEquals(15.0, round(($regrindAlloc / $totalAllocated) * 100, 2));
     }
 
-    public function test_fefo_allocation_falls_back_to_virgin_when_regrind_zero_or_insufficient(): void
+    public function test_fifo_allocation_falls_back_to_virgin_when_regrind_zero_or_insufficient(): void
     {
         // Virgin lot of 1,000 KG
         $virginLot = MaterialLot::create([
@@ -223,7 +225,7 @@ class RegrindAndBlendCapTest extends TestCase
         );
 
         // Zero regrind in warehouse, request 400 KG
-        $allocations = $this->fefoService->allocate($this->ppResin, 400.0);
+        $allocations = $this->fifoService->allocate($this->ppResin, 400.0);
 
         $this->assertCount(1, $allocations);
         $this->assertEquals(400.0, $allocations[0]['quantity']);
@@ -231,7 +233,7 @@ class RegrindAndBlendCapTest extends TestCase
         $this->assertEquals(MaterialLot::TYPE_VIRGIN, $allocations[0]['lot_type']);
     }
 
-    public function test_fefo_allocation_strictly_excludes_regrind_when_item_disallows_regrind(): void
+    public function test_fifo_allocation_strictly_excludes_regrind_when_item_disallows_regrind(): void
     {
         // PC Clear item: allow_regrind = false
         $this->assertFalse($this->pcClear->allowsRegrind());
@@ -267,7 +269,7 @@ class RegrindAndBlendCapTest extends TestCase
         );
 
         // Allocate 200 KG: must come 100% from virgin lot even though regrind expires sooner!
-        $allocations = $this->fefoService->allocate($this->pcClear, 200.0);
+        $allocations = $this->fifoService->allocate($this->pcClear, 200.0);
 
         $this->assertCount(1, $allocations);
         $this->assertEquals($pcVirgin->id, $allocations[0]['lot_id']);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\DeliveryOrder;
@@ -13,7 +15,7 @@ class WavePickingService
 {
     public function __construct(
         protected BatchPickingService $batchService,
-        protected FefoAllocationService $fefoService,
+        protected FifoAllocationService $fifoService,
         protected PickPathRoutingService $routingService
     ) {}
 
@@ -110,7 +112,7 @@ class WavePickingService
     }
 
     /**
-     * Release wave: allocates unassigned lots via FEFO, partitions into multi-tote batches, and sets status to RELEASED.
+     * Release wave: allocates unassigned lots via FIFO, partitions into multi-tote batches, and sets status to RELEASED.
      */
     public function releaseWave(PickingWave $wave, int $maxOrdersPerBatch = 4): PickingWave
     {
@@ -123,7 +125,7 @@ class WavePickingService
         return DB::transaction(function () use ($wave, $maxOrdersPerBatch) {
             $waveOrders = $wave->waveOrders()->with('orderable.items')->get();
 
-            // Validate and allocate FEFO lots for any order items lacking a lot or source bin
+            // Validate and allocate FIFO lots for any order items lacking a lot or source bin.
             foreach ($waveOrders as $waveOrder) {
                 $order = $waveOrder->orderable;
                 if (! $order) {
@@ -133,7 +135,7 @@ class WavePickingService
                 foreach ($order->items as $itemLine) {
                     if (! $itemLine->material_lot_id || ! $itemLine->source_bin_id) {
                         $qty = (float) ($itemLine->quantity_ordered ?? $itemLine->quantity_requested ?? 0);
-                        $allocations = $this->fefoService->allocate($itemLine->item, $qty);
+                        $allocations = $this->fifoService->allocate($itemLine->item, $qty);
 
                         if (! empty($allocations)) {
                             $firstAlloc = $allocations[0];

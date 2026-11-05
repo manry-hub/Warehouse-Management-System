@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -57,6 +59,8 @@ class ScannerInboundController extends Controller
             'vendor_code' => $validated['vendor_code'],
             'vendor_lot_number' => $validated['vendor_lot_number'],
             'vendor_heat_number' => $validated['vendor_heat_number'] ?? null,
+            // ASVS V2.2.1: the FIFO timestamp is server-controlled, never client supplied.
+            'received_at' => now(),
             'expiry_date' => $validated['expiry_date'] ?? now()->addDays($item->shelf_life_days ?? 730),
             'status' => MaterialLot::STATUS_QA_HOLD, // QA Hold enforced upon intake
         ]);

@@ -15,7 +15,7 @@ Define data models, state machines, REST API endpoints, and path optimization al
 
 ### In Scope
 - Relational schema for `picking_waves`, `picking_wave_orders`, `picking_batches`, and `picking_batch_items`.
-- `WavePickingService`: Wave lifecycle, FEFO allocation triggers, batch partitioning.
+- `WavePickingService`: Wave lifecycle, FIFO allocation triggers, batch partitioning.
 - `PickPathRoutingService`: Serpentine coordinate sorting, distance estimation.
 - `BatchPickingService`: Pick execution, tote scanning verification, double-entry inventory ledger deduction.
 - Handheld Scanner REST API endpoints (`/v1/scanner/batch-picking/*`).
@@ -34,7 +34,7 @@ Define data models, state machines, REST API endpoints, and path optimization al
 | ID | Requirement | Acceptance Criteria |
 | --- | --- | --- |
 | `REQ-WAV-01` | Group pending `DeliveryOrder` or `StagingRequest` items into a `PickingWave`. | Generates a unique wave number `WAV-YYYYMMDD-XXXX` with status `DRAFT`. |
-| `REQ-WAV-02` | Release a wave to trigger FEFO lot reservations and generate multi-tote batches. | Status transitions to `RELEASED`, lots are reserved, and batches are created with up to 4 orders per batch. |
+| `REQ-WAV-02` | Release a wave to trigger FIFO lot reservations and generate multi-tote batches. | Status transitions to `RELEASED`, lots are reserved, and batches are created with up to 4 orders per batch. |
 | `REQ-WAV-03` | S-Shape Pick-Path Optimization algorithm sorts pick items sequentially. | Picks in odd aisles sort rack ascending, even aisles sort rack descending, shelf ascending. |
 | `REQ-WAV-04` | Handheld Batch Pick confirmation requires tote scan. | Verifies scanned lot equals reserved lot, scanned bin equals pick bin, and destination tote matches target order. |
 | `REQ-WAV-05` | Double-entry inventory movement upon batch pick item completion. | Creates `InventoryMovement` debiting source bin and crediting `BIN-STAGING-OUT` with zero balance discrepancy. |
@@ -132,6 +132,6 @@ Define data models, state machines, REST API endpoints, and path optimization al
 | Condition | Required Behavior |
 | --- | --- |
 | Wrong bin scanned | Return HTTP 422: `Scanned bin does not match expected pick location [A-01-02-B]`. Trigger high-low warning chime. |
-| Wrong lot scanned | Return HTTP 422: `Scanned lot does not match FEFO reserved lot [LOT-XXXX]. Scan designated lot to ensure shelf-life integrity`. |
+| Wrong lot scanned | Return HTTP 422: `Scanned lot does not match FIFO reserved lot [LOT-XXXX]. Scan designated lot to ensure traceability integrity`. |
 | Wrong tote scanned | Return HTTP 422: `Scanned tote [TOTE-03] does not match target order tote [TOTE-01]. Item must be deposited into TOTE-01`. |
 | Insufficient physical stock in bin | Return HTTP 422 with option to log partial pick and flag item status `SHORT`. |

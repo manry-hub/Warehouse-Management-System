@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Exceptions\InvalidLotStateException;
@@ -12,7 +14,7 @@ use App\Models\MaterialLot;
 use App\Models\User;
 use App\Models\WarehouseBin;
 use App\Services\DeliveryOrderService;
-use App\Services\FefoAllocationService;
+use App\Services\FifoAllocationService;
 use App\Services\InventoryMovementService;
 use App\Services\LotQualityService;
 use Database\Seeders\ItemCatalogSeeder;
@@ -88,45 +90,48 @@ class WmsCoreDomainTest extends TestCase
         $this->assertEquals(500.0, (float) $totalOnHand);
     }
 
-    public function test_fefo_allocation_prioritizes_earliest_expiry_and_skips_qa_hold(): void
+    public function test_fifo_allocation_prioritizes_earliest_receipt_and_skips_qa_hold(): void
     {
         $movementService = app(InventoryMovementService::class);
-        $fefoService = app(FefoAllocationService::class);
+        $fifoService = app(FifoAllocationService::class);
 
         $item = Item::where('sku', 'RAW-PP-INJ-503')->firstOrFail();
         $bin = WarehouseBin::where('bin_code', 'RM-A-01-11')->firstOrFail();
 
-        // Lot A: expires in 6 months (Status: AVAILABLE)
+        // Lot A arrived first but expires later than Lot C.
         $lotA = MaterialLot::create([
             'lot_number' => 'LOT-EXP-EARLY',
             'item_id' => $item->id,
+            'received_at' => now()->subDays(3),
             'expiry_date' => now()->addMonths(6),
             'status' => MaterialLot::STATUS_AVAILABLE,
         ]);
         $movementService->recordReceipt($item, $lotA, $bin, 100.0);
 
-        // Lot B: expires in 1 month (Status: QA_HOLD - must be skipped by FEFO)
+        // Lot B is older but on QA hold, so it remains ineligible.
         $lotB = MaterialLot::create([
             'lot_number' => 'LOT-EXP-VERY-EARLY-HOLD',
             'item_id' => $item->id,
+            'received_at' => now()->subDays(5),
             'expiry_date' => now()->addMonth(),
             'status' => MaterialLot::STATUS_QA_HOLD,
         ]);
         $movementService->recordReceipt($item, $lotB, $bin, 100.0);
 
-        // Lot C: expires in 12 months (Status: AVAILABLE)
+        // Lot C arrived after Lot A but expires sooner; FIFO must still select Lot A first.
         $lotC = MaterialLot::create([
             'lot_number' => 'LOT-EXP-LATE',
             'item_id' => $item->id,
+            'received_at' => now()->subDay(),
             'expiry_date' => now()->addMonths(12),
             'status' => MaterialLot::STATUS_AVAILABLE,
         ]);
         $movementService->recordReceipt($item, $lotC, $bin, 100.0);
 
         // Allocate 150 KG
-        $allocations = $fefoService->allocate($item, 150.0);
+        $allocations = $fifoService->allocate($item, 150.0);
 
-        // Should take 100 KG from Lot A (earliest available), 0 from Lot B (on hold), and 50 KG from Lot C
+        // Take Lot A first by receipt time, skip held Lot B, then take Lot C.
         $this->assertCount(2, $allocations);
         $this->assertEquals('LOT-EXP-EARLY', $allocations[0]['lot_number']);
         $this->assertEquals(100.0, $allocations[0]['quantity']);

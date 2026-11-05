@@ -16,7 +16,7 @@ Define data schema, state machines, deficit calculation algorithms, REST API con
 ### In Scope
 - Schema additions to `warehouse_bins` (`is_pick_face`, `min_stock_kg`, `max_stock_kg`).
 - Relational schema for `replenishment_tasks`.
-- `ReplenishmentService`: Deficit evaluation daemon, FEFO bulk lot selection, task assignment, and confirmation.
+- `ReplenishmentService`: Deficit evaluation daemon, FIFO bulk lot selection, task assignment, and confirmation.
 - Artisan command: `wms:evaluate-replenishments`.
 - Filament Admin Resource: `ReplenishmentTaskResource`.
 - Rugged Scanner PWA: Forklift directed replenishment mode (`/scanner/replenishment`) and API endpoints (`/v1/scanner/replenishments/*`).
@@ -36,7 +36,7 @@ Define data schema, state machines, deficit calculation algorithms, REST API con
 | `REQ-RPL-01` | Bin Replenishment Configuration | `warehouse_bins` supports `is_pick_face` flag, `min_stock_kg`, and `max_stock_kg`. |
 | `REQ-RPL-02` | Automated Deficit Detection | Triggers task when effective on-hand falls below `min_stock_kg`. Deficit calculated as `max_stock_kg - effective_stock`. |
 | `REQ-RPL-03` | Duplicate Prevention Guard | Does not spawn duplicate tasks if an open (`PENDING`, `ASSIGNED`, `IN_TRANSIT`) task exists for target bin & item. |
-| `REQ-RPL-04` | FEFO Bulk Lot Reservation | Automatically selects bulk reserve lots with earliest expiry and increments `quantity_reserved`. |
+| `REQ-RPL-04` | FIFO Bulk Lot Reservation | Automatically selects eligible bulk reserve lots with the earliest `received_at` and increments `quantity_reserved`. |
 | `REQ-RPL-05` | Forklift Scanner Two-Step Verification | Requires hardware laser scans of source bulk bin, lot barcode, and target pick bin before confirming transfer. |
 | `REQ-RPL-06` | Double-Entry Movement Invariant | Transfers stock from bulk to pick bin via `InventoryMovement::TYPE_REPLENISHMENT`, relieving bulk reservation. |
 
@@ -101,5 +101,5 @@ Define data schema, state machines, deficit calculation algorithms, REST API con
 | --- | --- |
 | Target bin scanned does not match task target | Return HTTP 422: `Scanned target bin [X] does not match designated pick face bin [Y]`. High-low error audio chime. |
 | Source bin scanned does not match source bulk bin | Return HTTP 422: `Scanned source bin [X] does not match reserved bulk location [Y]`. |
-| Lot scanned does not match reserved lot | Return HTTP 422: `Scanned lot [X] does not match FEFO reserved lot [Y]`. |
+| Lot scanned does not match reserved lot | Return HTTP 422: `Scanned lot [X] does not match FIFO reserved lot [Y]`. |
 | Quantity exceeds bulk bin on-hand | Return HTTP 422: `Insufficient available stock in bulk bin`. |

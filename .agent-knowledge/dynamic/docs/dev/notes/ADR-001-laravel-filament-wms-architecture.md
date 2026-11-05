@@ -10,7 +10,7 @@
 
 ## Context
 
-The discrete injection molding enterprise requires an independent Warehouse Management System (WMS) to govern raw resin storage, FEFO staging allocation to injection molding machines, finished goods packaging receipt, and outbound shipping with legal Delivery Orders (DO).
+The discrete injection molding enterprise requires an independent Warehouse Management System (WMS) to govern raw resin storage, FIFO staging allocation to injection molding machines, finished goods packaging receipt, and outbound shipping with legal Delivery Orders (DO).
 
 The system must run autonomously from the shop-floor MES (built with NestJS) while maintaining tight data synchronization. The development team needs high delivery velocity, out-of-the-box support for complex data grids, form wizards, barcode scanner integration, robust transactional concurrency, and rich role-based access control.
 

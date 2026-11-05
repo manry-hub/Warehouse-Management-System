@@ -64,7 +64,7 @@ class RealisticOperationsSeeder extends Seeder
         // STEP 1: Seed Virgin & Regrind Material Lots
         // -------------------------------------------------------------
         $lotsData = [
-            // Prime PP Lots from Lotte Chemical (FEFO staggered expiry)
+            // Prime PP Lots from Lotte Chemical with staggered receipt times for FIFO.
             [
                 'lot_number' => 'LOT-LT-260801',
                 'lot_type' => MaterialLot::TYPE_VIRGIN,

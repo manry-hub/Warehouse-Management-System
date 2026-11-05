@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ReplenishmentTaskResource\Pages;
@@ -78,7 +80,7 @@ class ReplenishmentTaskResource extends Resource
                             ->searchable(),
 
                         Forms\Components\Select::make('material_lot_id')
-                            ->label('Allocated FEFO Lot')
+                            ->label('Allocated FIFO Lot')
                             ->relationship('materialLot', 'lot_number')
                             ->searchable(),
 
@@ -146,7 +148,7 @@ class ReplenishmentTaskResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('materialLot.lot_number')
-                    ->label('FEFO Lot')
+                    ->label('FIFO Lot')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('requested_quantity_kg')

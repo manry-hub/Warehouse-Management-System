@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ItemResource\Pages;
@@ -56,7 +58,7 @@ class ItemResource extends Resource
                     ->schema([
                         Forms\Components\Toggle::make('allow_regrind')
                             ->label('Allow Regrind Blending')
-                            ->helperText('Permit recycled runner scrap to be blended into FEFO picklists.')
+                            ->helperText('Permit recycled runner scrap to be blended into FIFO picklists.')
                             ->default(false)
                             ->reactive(),
                         Forms\Components\TextInput::make('max_regrind_percentage')

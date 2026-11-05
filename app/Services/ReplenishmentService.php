@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\InventoryBalance;
@@ -19,7 +21,7 @@ class ReplenishmentService
 
     /**
      * Scan forward-pick bins, evaluate inventory deficits against min/max thresholds,
-     * and auto-generate replenishment missions reserving FEFO bulk lots.
+     * and auto-generate replenishment missions reserving FIFO bulk lots.
      *
      * @return Collection<int, ReplenishmentTask>
      */
@@ -91,7 +93,7 @@ class ReplenishmentService
                     if ($effectiveStock < $minStock) {
                         $deficit = max(1.0, round($maxStock - $effectiveStock, 3));
 
-                        // Search candidate bulk storage bins for eligible FEFO lots
+                        // Search candidate bulk storage bins for eligible FIFO lots.
                         $candidateBalance = InventoryBalance::whereHas('bin', function ($q) {
                             $q->where('is_pick_face', false)
                                 ->where('is_blocked', false);
@@ -100,10 +102,11 @@ class ReplenishmentService
                             ->whereHas('lot', fn ($q) => $q->where('status', MaterialLot::STATUS_AVAILABLE))
                             ->whereRaw('(inventory_balances.quantity_on_hand - inventory_balances.quantity_reserved) > 0')
                             ->join('material_lots', 'inventory_balances.material_lot_id', '=', 'material_lots.id')
-                            ->select('inventory_balances.*', 'material_lots.expiry_date as lot_expiry', 'material_lots.created_at as lot_created')
-                            ->orderBy('lot_expiry', 'asc')
-                            ->orderBy('lot_created', 'asc')
+                            ->select('inventory_balances.*')
+                            ->orderBy('material_lots.received_at', 'asc')
+                            ->orderBy('inventory_balances.id', 'asc')
                             ->lockForUpdate()
+                            ->get()
                             ->first();
 
                         if (! $candidateBalance) {
@@ -189,7 +192,7 @@ class ReplenishmentService
         if (! $lot || strcasecmp(trim($lot->lot_number), trim($scannedLotNumber)) !== 0) {
             $expectedLot = $lot->lot_number ?? 'None';
             throw ValidationException::withMessages([
-                'scanned_lot_number' => "Scanned lot [{$scannedLotNumber}] does not match FEFO reserved lot [{$expectedLot}].",
+                'scanned_lot_number' => "Scanned lot [{$scannedLotNumber}] does not match FIFO reserved lot [{$expectedLot}].",
             ]);
         }
 

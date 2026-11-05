@@ -26,7 +26,7 @@ We establish an enterprise picking optimization engine comprising:
 1. **Wave Management (`PickingWave`):**
    - Groups pending `DeliveryOrder` and `StagingRequest` demands into structured Waves based on cutoff times, priority (`URGENT`, `NORMAL`, `LOW`), and fulfillment channels.
    - Status transitions follow a strict state machine: `DRAFT` $\to$ `RELEASED` $\to$ `IN_PROGRESS` $\to$ `COMPLETED` (or `CANCELLED`).
-   - Wave release triggers `FefoAllocationService` to lock optimal unexpired lots and calculate consolidated pick requirements.
+   - Wave release triggers `FifoAllocationService` to lock the earliest-received eligible lots and calculate consolidated pick requirements.
 
 2. **Batch Picking with Multi-Tote Segregation (`PickingBatch` & `PickingBatchItem`):**
    - Consolidates pick requirements across up to $N$ orders (default 4 orders per batch cart).

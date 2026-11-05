@@ -56,7 +56,7 @@
 |  │ Core Domain & Service Layer                                                                 │  |
 |  │  - Inbound & Lot Allocation Service (COA validation, Heat #, GS1 QR Label Generation)       │  |
 |  │  - Location & Bin Capacity Engine (Zoning, Rack limits, Putaway guidance)                   │  |
-|  │  - FEFO / FIFO Picking & Reservation Engine (Pessimistic Locking, Expiry Prioritization)    │  |
+|  │  - FIFO Picking & Reservation Engine (Pessimistic Locking, Receipt-Time Prioritization)    │  |
 |  │  - MES Material Dispatch Gateway (Outbound sync to MES /materials/lots)                     │  |
 |  │  - Finished Goods Handover Service (Packaging reconciliation & FG rack storage)             │  |
 |  │  - Outbound Pick-Pack-Ship Engine (Delivery Order PDF generation, Truck scan verification)  │  |
@@ -90,7 +90,7 @@
 | `Scanner Mobile / API Gateway` | REST API | Headless API consumed by rugged handheld barcode/QR scanners (Zebra TC26, Honeywell) for high-speed scan validation, putaway, and picking. | Laravel Sanctum, Form Requests, Resources |
 | `Inbound Receiving Engine` | Domain Service | Validates PO arrivals, registers supplier heat numbers, checks COA status, and dispatches ZPL/PDF label printing jobs. | Laravel Service, DomPDF / Barcode Service |
 | `Bin Topology & Putaway Engine` | Domain Service | Models warehouse spatial coordinates (Zone-Aisle-Rack-Shelf-Bin) and evaluates weight/volume capacity rules for safe putaway. | Eloquent ORM, Spatial/Hierarchical logic |
-| `FEFO/FIFO Allocation Engine` | Domain Service | Determines optimal lots for production based on oldest expiry date and lowest lot ID; enforces atomic stock reservations with `lockForUpdate()`. | Laravel Service, MariaDB InnoDB transactions |
+| `FIFO Allocation Engine` | Domain Service | Determines eligible lots by earliest receipt time and lowest balance ID; enforces atomic stock reservations with `lockForUpdate()`. | Laravel Service, database transactions |
 | `MES Integration Gateway` | Integration Service | Asynchronously dispatches staged material events to the NestJS MES API and processes incoming finished goods webhooks. | Laravel HTTP Client, Guzzle, Redis Queues, Horizon |
 | `Outbound & Shipping Engine` | Domain Service | Manages picklists, scan-to-truck verification manifests, and generates official Delivery Order documents. | Laravel Service, PDF Engine |
 | `Inventory Ledger & Audit Trail` | Domain Engine | Maintains an append-only double-entry stock movement ledger (`inventory_movements`) ensuring complete auditable balance history. | Eloquent Event Observers, MariaDB InnoDB |
@@ -157,7 +157,7 @@
        ▼ (MES Webhook or WMS Cron Dispatch)
 [WMS Generates Staging Picklist]
        │
-       ├──► [Apply FEFO Algorithm: Select Oldest Expiring Available Lots]
+       ├──► [Apply FIFO Algorithm: Select Earliest-Received Eligible Lots]
        ├──► [Reserve Stock via lockForUpdate() to prevent concurrent double-pick]
        ▼
 [Material Handler scans Pallet/Bag at Warehouse Exit Door]

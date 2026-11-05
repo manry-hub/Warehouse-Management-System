@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\Item;
@@ -77,6 +79,10 @@ class ScannerApiTest extends TestCase
             'quantity' => 500.0,
             'reference_id' => 'PO-2026-8801',
         ]);
+
+        $this->assertNotNull(
+            MaterialLot::where('vendor_lot_number', 'LT-49021')->value('received_at')
+        );
     }
 
     public function test_scanner_picking_enforces_available_status_guard(): void

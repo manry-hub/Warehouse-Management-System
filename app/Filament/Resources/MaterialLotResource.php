@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MaterialLotResource\Pages;
@@ -47,6 +49,10 @@ class MaterialLotResource extends Resource
                 Forms\Components\Section::make('Dates & Status')
                     ->schema([
                         Forms\Components\DatePicker::make('manufactured_date'),
+                        Forms\Components\DateTimePicker::make('received_at')
+                            ->label('Received At')
+                            ->default(now())
+                            ->required(),
                         Forms\Components\DatePicker::make('expiry_date'),
                         Forms\Components\Select::make('status')
                             ->options([
@@ -108,6 +114,9 @@ class MaterialLotResource extends Resource
                     ]),
                 Tables\Columns\TextColumn::make('expiry_date')
                     ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('received_at')
+                    ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

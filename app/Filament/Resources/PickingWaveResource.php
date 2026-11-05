@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PickingWaveResource\Pages;
@@ -151,7 +153,7 @@ class PickingWaveResource extends Resource
                     ->visible(fn (PickingWave $record) => $record->status === PickingWave::STATUS_DRAFT)
                     ->requiresConfirmation()
                     ->modalHeading('Release Wave & Generate Batches')
-                    ->modalDescription('Releasing this wave will allocate unassigned lots via FEFO, partition orders into 4-tote carts, and calculate optimal S-Path routes.')
+                    ->modalDescription('Releasing this wave will allocate unassigned lots via FIFO, partition orders into 4-tote carts, and calculate optimal S-Path routes.')
                     ->action(function (PickingWave $record, WavePickingService $service) {
                         try {
                             $service->releaseWave($record);

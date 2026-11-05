@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -38,6 +40,7 @@ class MaterialLot extends Model
         'vendor_lot_number',
         'vendor_heat_number',
         'manufactured_date',
+        'received_at',
         'expiry_date',
         'coa_file_path',
         'coa_metrics',
@@ -48,6 +51,7 @@ class MaterialLot extends Model
 
     protected $casts = [
         'manufactured_date' => 'date',
+        'received_at' => 'datetime',
         'expiry_date' => 'date',
         'coa_metrics' => 'array',
         'regrind_generation' => 'integer',

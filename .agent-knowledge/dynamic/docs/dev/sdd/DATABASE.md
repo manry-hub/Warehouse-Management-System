@@ -74,7 +74,7 @@ Catalog of all trackable articles (Raw resin, masterbatch, packaging cartons, fi
 | `unit_of_measure` | `varchar(20)` | NOT NULL | | e.g. `KG`, `PCS`, `BAG_25KG`, `BOX` |
 | `standard_pack_qty` | `decimal(10,2)` | DEFAULT 1.00 | | Default quantity per packing unit |
 | `minimum_safety_stock` | `decimal(10,2)` | DEFAULT 0.00 | | Reorder threshold level |
-| `shelf_life_days` | `integer` | nullable | | Shelf life in days for FEFO calculation |
+| `shelf_life_days` | `integer` | nullable | | Shelf life used to determine eligibility; does not determine FIFO order |
 | `is_active` | `boolean` | DEFAULT true | INDEX | Active catalog item flag |
 | `created_at` | `timestamp` | NOT NULL | | Standard audit timestamp |
 | `updated_at` | `timestamp` | NOT NULL | | Standard audit timestamp |
@@ -91,7 +91,8 @@ Batch/lot-level tracking for raw materials and finished goods with genealogy pro
 | `vendor_lot_number` | `varchar(100)` | nullable | INDEX | Supplier's manufacturer batch # |
 | `vendor_heat_number` | `varchar(100)` | nullable | INDEX | Smelt/heat number from resin plant |
 | `manufactured_date` | `date` | nullable | | Date synthesized/molded |
-| `expiry_date` | `date` | nullable | INDEX | Critical for FEFO picking order |
+| `received_at` | `timestamp` | NOT NULL | INDEX | Receipt timestamp used for FIFO picking order |
+| `expiry_date` | `date` | nullable | INDEX | Eligibility guard; expired lots cannot be allocated |
 | `coa_file_path` | `varchar(255)` | nullable | | Encrypted/private path to COA PDF |
 | `status` | `varchar(30)` | DEFAULT 'QA_HOLD' | INDEX | Enum: `QA_HOLD`, `AVAILABLE`, `EXPIRED`, `QUARANTINE` |
 | `qc_inspected_at` | `timestamp` | nullable | | Timestamp of QC clearance |
@@ -218,7 +219,7 @@ Periodic stock opname and blind cycle counting subsystem (Epic 6 / US-014).
 | Table | Index | Columns | Type | Reason |
 |-------|-------|---------|------|--------|
 | `inventory_balances` | `idx_bal_bin_item_lot` | `bin_id, item_id, material_lot_id` | UNIQUE | Prevents duplicate balance rows for the same SKU & Lot inside a single Bin |
-| `material_lots` | `idx_lots_item_status_exp` | `item_id, status, expiry_date` | BTREE | Core index for high-speed FEFO/FIFO picking queries |
+| `material_lots` | `idx_lots_item_status_recv` | `item_id, status, received_at` | BTREE | Core index for high-speed FIFO picking queries |
 | `inventory_movements` | `idx_mov_ref_created` | `reference_id, created_at` | BTREE | Speeds up traceability audits and document movement histories |
 | `warehouse_bins` | `idx_bin_code_unique` | `bin_code` | UNIQUE | Instant sub-second lookup upon handheld barcode scan |
 | `staging_requests` | `idx_stg_mes_status` | `mes_production_order_id, status` | BTREE | Rapid lookup when MES queries replenishment status |

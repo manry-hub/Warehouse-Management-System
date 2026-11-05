@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Exceptions\InsufficientStockException;
@@ -8,10 +10,10 @@ use App\Models\Item;
 use App\Models\MaterialLot;
 use Illuminate\Support\Facades\DB;
 
-class FefoAllocationService
+class FifoAllocationService
 {
     /**
-     * Allocate lots for an item based on strict First-Expired, First-Out (FEFO),
+     * Allocate lots for an item based on strict First-In, First-Out (FIFO),
      * enforcing the maximum regrind blend cap when applicable.
      * Locks candidate balances atomically to prevent concurrent race conditions.
      *
@@ -140,7 +142,7 @@ class FefoAllocationService
     }
 
     /**
-     * Fetch candidate balances locked for update, ordered by FEFO.
+     * Fetch candidate balances locked for update, ordered by FIFO receipt time.
      */
     protected function getCandidateBalances(Item $item, ?string $lotType = null, bool $excludeRegrind = false)
     {
@@ -158,8 +160,8 @@ class FefoAllocationService
             ->where('warehouse_bins.is_blocked', false)
             ->where('warehouse_zones.zone_type', '!=', 'QUARANTINE')
             ->whereRaw('(inventory_balances.quantity_on_hand - inventory_balances.quantity_reserved) > 0')
-            ->orderBy('material_lots.expiry_date', 'asc')
-            ->orderBy('material_lots.created_at', 'asc')
+            ->orderBy('material_lots.received_at', 'asc')
+            ->orderBy('inventory_balances.id', 'asc')
             ->lockForUpdate();
 
         if ($lotType !== null) {

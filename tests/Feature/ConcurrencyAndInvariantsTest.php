@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Exceptions\InsufficientStockException;
@@ -8,7 +10,7 @@ use App\Models\InventoryMovement;
 use App\Models\Item;
 use App\Models\MaterialLot;
 use App\Models\WarehouseBin;
-use App\Services\FefoAllocationService;
+use App\Services\FifoAllocationService;
 use App\Services\InventoryMovementService;
 use Database\Seeders\ItemCatalogSeeder;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -88,7 +90,7 @@ class ConcurrencyAndInvariantsTest extends TestCase
     public function test_concurrent_allocation_prevents_negative_balance_and_over_reservation(): void
     {
         $movementService = app(InventoryMovementService::class);
-        $fefoService = app(FefoAllocationService::class);
+        $fifoService = app(FifoAllocationService::class);
 
         $item = Item::where('sku', 'RAW-ABS-HI-121')->firstOrFail();
         $bin = WarehouseBin::where('bin_code', 'RM-A-01-11')->firstOrFail();
@@ -109,7 +111,7 @@ class ConcurrencyAndInvariantsTest extends TestCase
         // Simulate 7 successive attempts to allocate 20 kg each (Total demand: 140 kg, available: 100 kg)
         for ($i = 0; $i < 7; $i++) {
             try {
-                $fefoService->allocate($item, 20.0);
+                $fifoService->allocate($item, 20.0);
                 $successfulAllocations++;
             } catch (InsufficientStockException $e) {
                 $failedAllocations++;

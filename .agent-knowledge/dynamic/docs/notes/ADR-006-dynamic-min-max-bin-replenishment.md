@@ -35,7 +35,7 @@ We establish an automated top-off replenishment architecture comprising:
      $$\text{Effective Stock} = \text{Current On-Hand} - \text{Reserved Stock} + \text{In-Transit Replenishment}$$
    - When $\text{Effective Stock} < \text{min\_stock\_kg}$, a replenishment deficit is triggered:
      $$\text{Replenishment Deficit} = \text{max\_stock\_kg} - \text{Effective Stock}$$
-   - Searches `ZONE-BULK` reserve bins for eligible material lots using strict **FEFO (First-Expired, First-Out)** rules.
+   - Searches `ZONE-BULK` reserve bins for eligible material lots using strict **FIFO (First-In, First-Out)** receipt-time rules.
    - Prevents duplicate replenishment task spamming by checking for active pending/assigned tasks on the same bin and item.
    - Assigns priority dynamically:
      - `CRITICAL`: Effective stock is $0$ (immediate stockout).
@@ -57,7 +57,7 @@ We establish an automated top-off replenishment architecture comprising:
 | Option | Summary | Decision |
 | --- | --- | --- |
 | **Option 1: Reactive Manual Stock Transfers** | Dispatchers monitor bin heatmaps and manually create transfer orders. | **Rejected:** Error-prone, delays order picking waves, and causes machine staging downtime. |
-| **Option 2: Automated Min-Max Dynamic Replenishment (Selected)** | Automated scheduled evaluation calculating deficits, auto-reserving FEFO bulk lots, and dispatching prioritized forklift scanner missions. | **Selected:** Industry standard for tier-1 WMS; eliminates pick-face stockouts while maintaining strict double-entry inventory invariants. |
+| **Option 2: Automated Min-Max Dynamic Replenishment (Selected)** | Automated scheduled evaluation calculating deficits, auto-reserving FIFO bulk lots, and dispatching prioritized forklift scanner missions. | **Selected:** Industry standard for tier-1 WMS; eliminates pick-face stockouts while maintaining strict double-entry inventory invariants. |
 | **Option 3: Fixed Periodic Scheduled Restocking** | Restock all pick bins once per day at midnight. | **Rejected:** Inflexible for variable manufacturing consumption where high-volume automotive runs deplete bins mid-shift. |
 
 ---

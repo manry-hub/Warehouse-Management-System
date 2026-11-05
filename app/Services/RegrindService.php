@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\InventoryBalance;
@@ -74,6 +76,7 @@ class RegrindService
                 'vendor_lot_number' => $parentLot?->lot_number ?? ($productionOrder ?? 'SHOP-FLOOR-SCRAP'),
                 'vendor_heat_number' => $parentLot?->vendor_heat_number,
                 'manufactured_date' => now()->toDateString(),
+                'received_at' => now(),
                 'expiry_date' => $expiryDate,
                 'status' => $status,
                 'qc_inspected_at' => $status === MaterialLot::STATUS_AVAILABLE ? now() : null,

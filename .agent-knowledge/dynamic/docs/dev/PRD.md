@@ -17,7 +17,7 @@ In discrete plastic injection molding facilities, warehouse operations struggle 
 1. **Traceability Blind Spots:** Incoming raw material lots (resin bags, gaylords, masterbatch) lack standardized bin-level traceability, making vendor heat numbers and Certificate of Analysis (COA) data hard to trace back during quality audits or customer recalls.
 2. **Shop Floor Material Starvation & Stock-outs:** Staging hoppers and injection machines frequently experience micro-delays due to uncoordinated material requisition between warehouse handlers and shop floor line operators.
 3. **Mismatched Finished Goods Handover:** Molded and packaged parts transferred from the packaging station lack automated handover verification, leading to discrepancy between MES packed counts and actual warehouse bin storage.
-4. **FIFO / FEFO Violations:** Plastic resin granules and pigments with sensitive shelf lives or drying requirements are prone to improper dispatching without strict First-Expired, First-Out (FEFO) rules.
+4. **FIFO Violations:** Plastic resin granules and pigments are prone to improper dispatching without strict First-In, First-Out (FIFO) rules while still blocking expired lots.
 5. **Paper-Driven Dispatching:** Shipping orders, truck picklists, and Delivery Orders (DO) are handled manually, causing truck loading delays and fulfillment errors.
 
 ### Target Users
@@ -26,7 +26,7 @@ In discrete plastic injection molding facilities, warehouse operations struggle 
 |------|-------------|--------------|
 | `Warehouse Manager` | Head of warehouse operations & supply chain | Real-time inventory valuation, warehouse capacity utilization, bin fill-rates, and dispatch SLA oversight. |
 | `Inbound Material Receiver` | Receiving clerk at the unloading dock | Inspecting POs, recording vendor lots/COA, printing GS1-128/QR pallet labels, and assigning putaway bins. |
-| `Material Handler / Staging Clerk` | Shop floor replenishment handler | Picking raw materials (resin/masterbatch) via FIFO/FEFO picklists, issuing material to MES hoppers, and tracking regrind return. |
+| `Material Handler / Staging Clerk` | Shop floor replenishment handler | Picking raw materials (resin/masterbatch) via FIFO picklists, issuing material to MES hoppers, and tracking regrind return. |
 | `Finished Goods Clerk` | Warehouse personnel in FG zone | Scanning incoming pallets/cartons from MES packaging terminals, verifying carton counts, and assigning rack locations. |
 | `Outbound Dispatcher / Shipping Clerk` | Shipping dock coordinator | Picking orders based on Sales/Delivery Orders, verifying truck loading with handheld barcode scanners, and issuing Delivery Orders (DO). |
 | `Quality Assurance Inspector` | Raw material incoming QA inspector | Sampling incoming raw lots, recording moisture content/melt flow index (MFI), and marking lots as `APPROVED`, `HOLD`, or `REJECTED`. |
@@ -55,7 +55,7 @@ In discrete plastic injection molding facilities, warehouse operations struggle 
 
 | ID | User Story | Priority | Acceptance Criteria |
 |----|-----------|----------|-------------------|
-| `US-006` | As a Material Handler, I want to receive automated material request picklists triggered by MES production schedules so that resin is staged ahead of runs. | `P0` | WMS receives production schedule demands from MES; generates picklist enforcing strict FEFO/FIFO allocation. |
+| `US-006` | As a Material Handler, I want to receive automated material request picklists triggered by MES production schedules so that resin is staged ahead of runs. | `P0` | WMS receives production schedule demands from MES; generates picklist enforcing strict FIFO allocation. |
 | `US-007` | As a Material Handler, I want to scan material bags during staging handover to synchronize lot availability with MES. | `P0` | Handover scan fires API/webhook to MES `POST /api/v1/materials/lots`, enabling immediate operator hopper loading in MES. |
 | `US-008` | As a Material Handler, I want to process regrind (recycled runner scrap) returns from the shop floor so that regrind material is tracked with proper blend ratios. | `P1` | Record regrind lot tied to the original parent production order with standard 10–20% blend cap. |
 
@@ -91,7 +91,7 @@ In discrete plastic injection molding facilities, warehouse operations struggle 
 | 1 | Inbound PO Receiving & Lot Intake | Record raw material receipt against PO, vendor lot, heat #, and initial bag/pallet counts. | Epic 1 |
 | 2 | QR/Barcode Label Generator & Print | Generate GS1-compatible QR/Barcode labels for raw material pallets, bags, and finished goods boxes. | Epic 1, 4 |
 | 3 | Warehouse Bin Topology Manager | Visual CRUD for Warehouse, Zone, Aisle, Rack, Shelf, and Bin with dimension & weight constraints. | Epic 2 |
-| 4 | FEFO/FIFO Guided Material Picking | Algorithm assigning oldest/first-expiring available lots for production dispatch. | Epic 3 |
+| 4 | FIFO Guided Material Picking | Algorithm assigning earliest-received eligible lots for production dispatch. | Epic 3 |
 | 5 | Bi-directional MES Integration Gateway | Webhook and REST API client/server synchronizing lots and finished goods with the NestJS MES. | Epic 3, 4 |
 | 6 | Finished Goods Handover Ingestion | Barcode scanning module to receive sealed cartons and pallets from MES Packaging Stations. | Epic 4 |
 | 7 | Outbound Delivery Order (DO) | Pick, pack, truck scan verification, and PDF Delivery Order generation with vehicle & driver metadata. | Epic 5 |

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\InventoryBalance;
@@ -86,7 +88,7 @@ class ReplenishmentTest extends TestCase
         return compact('item', 'pickBin', 'bulkBin', 'oldLot', 'bulkLot', 'bulkBalance');
     }
 
-    public function test_evaluate_deficits_detects_below_minimum_pick_bins_and_reserves_fefo_bulk_stock(): void
+    public function test_evaluate_deficits_detects_below_minimum_pick_bins_and_reserves_fifo_bulk_stock(): void
     {
         $data = $this->setupPickAndBulkStock();
         $service = app(ReplenishmentService::class);
@@ -114,6 +116,32 @@ class ReplenishmentTest extends TestCase
         // Idempotency check: Calling evaluate again must NOT spawn duplicate tasks
         $spawnedSecond = $service->evaluateDeficits();
         $this->assertCount(0, $spawnedSecond);
+    }
+
+    public function test_evaluate_deficits_reserves_the_earliest_received_eligible_bulk_lot(): void
+    {
+        $data = $this->setupPickAndBulkStock();
+
+        $earliestLot = MaterialLot::create([
+            'item_id' => $data['item']->id,
+            'lot_number' => 'LOT-BULK-FIFO-EARLIEST',
+            'lot_type' => MaterialLot::TYPE_VIRGIN,
+            'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDays(2),
+            'expiry_date' => now()->addYears(2),
+        ]);
+
+        InventoryBalance::create([
+            'bin_id' => $data['bulkBin']->id,
+            'item_id' => $data['item']->id,
+            'material_lot_id' => $earliestLot->id,
+            'quantity_on_hand' => 500.0,
+            'quantity_reserved' => 0.0,
+        ]);
+
+        $task = app(ReplenishmentService::class)->evaluateDeficits()->sole();
+
+        $this->assertSame($earliestLot->id, $task->material_lot_id);
     }
 
     public function test_artisan_evaluate_replenishments_command_executes_cleanly(): void
