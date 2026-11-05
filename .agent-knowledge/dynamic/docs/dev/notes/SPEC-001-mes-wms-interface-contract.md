@@ -3,7 +3,7 @@
 **Status:** `APPROVED`  
 **Date:** `2026-10-30`  
 **Owner:** `Systems Integration Lead`  
-**Related ADRs:** [`ADR-001-laravel-filament-wms-architecture.md`](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/notes/ADR-001-laravel-filament-wms-architecture.md)  
+**Related ADRs:** [`ADR-001-laravel-filament-wms-architecture.md`](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/ADR-001-laravel-filament-wms-architecture.md)  
 **Related Workflow:** Raw Material Replenishment & Finished Goods Packaging Handover
 
 ---
@@ -126,17 +126,11 @@ Define the authoritative data exchange formats, REST endpoints, webhook event si
 
 ## 4. Compatibility and Migration
 
-Not applicable for initial greenfield release. Both contracts use SemVer versioning in URL endpoints (`/api/v1/...`).
+Both contracts use SemVer versioning in URL endpoints (`/api/v1/...`).
 
 ---
 
-## 5. Open Questions and References
+## 5. References
 
-### Open Questions
-
-- *Q1:* Should bulk raw resin silos (unbagged tanker deliveries) use continuous level telemetry webhooks or manual batch intake in Phase 1? *(Decision: Manual batch intake in Phase 1; automated silo telemetry deferred to Phase 2).*
-
-### References
-
-- [Architecture Plan](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/sdd/ARCHITECTURE.md)
-- [MES Prisma Schema](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/backend/prisma/schema.prisma)
+- [Architecture Plan](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/dev/sdd/ARCHITECTURE.md)
+- [ADR-001](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/ADR-001-laravel-filament-wms-architecture.md)

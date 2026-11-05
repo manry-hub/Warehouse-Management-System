@@ -1,7 +1,7 @@
 # Architecture Plan — Warehouse Management System (WMS)
 
-> **Status:** `PLANNING` — New Project Mode  
-> **Output:** `.future/docs/dev/sdd/ARCHITECTURE.md`  
+> **Status:** `OPERATIONAL`  
+> **Output:** `.agent-knowledge/dynamic/docs/dev/sdd/ARCHITECTURE.md`  
 > **Purpose:** Technical blueprint for system design, components, data flows, security, deployment, and architectural decisions for the Laravel 11 + Filament v3 Warehouse Management System.
 
 ---
@@ -10,8 +10,10 @@
 
 | Item | Value |
 |------|-------|
-| Project Type | Monolith with Modular Service Layer & REST/Webhook Gateway |
-| Git Location | `wms-app/` — Standalone Repository (New Project) |
+| Project Type | Modular Monolith with Domain Service Layer & REST/Webhook Gateway |
+| Git Location | Standalone Repository |
+| Primary Database | Oracle Database 21c Express Edition (XE) |
+| Queue / Cache | Redis 7.2 (`predis/predis`) + Systemd Worker Daemon |
 
 ---
 
@@ -22,10 +24,10 @@
 **Modular Monolith (Domain-Driven Design within Laravel)**
 
 **Rationale:**
-1. **High Transactional Integrity (ACID):** Warehouse operations (e.g., reserving raw resin lots, decrementing inventory during staging handover, moving stock between bins) require immediate consistency with zero tolerance for phantom inventory or race conditions. A monolithic relational boundary using MariaDB (InnoDB engine) with database row-level locking (`lockForUpdate()`) provides deterministic consistency.
+1. **High Transactional Integrity (ACID):** Warehouse operations (reserving raw resin lots, decrementing inventory during staging handover, moving stock between bins) require immediate consistency with zero tolerance for phantom inventory or race conditions. A monolithic relational boundary using Oracle Database 21c XE with `FOR UPDATE OF inventory_balances.id SKIP LOCKED` provides deterministic consistency and non-blocking concurrency.
 2. **Operational Simplicity:** Avoids distributed microservice orchestration overhead, distributed tracing, and eventual consistency lag for shop-floor logistics.
 3. **Dual Operation Interface:** Combines rich server-rendered TALL-stack dashboards (Tailwind, Alpine.js, Laravel, Livewire via **Filament v3**) for desktop warehouse supervisors with lightweight RESTful API endpoints for industrial Android handheld barcode scanners (Zebra/Honeywell).
-4. **Decoupled Asynchronous Integration:** Communicates with the external NestJS MES via resilient asynchronous webhook event queues and Redis jobs, ensuring warehouse operations never freeze if the shop floor network fluctuates.
+4. **Decoupled Asynchronous Integration:** Communicates with the external NestJS MES and companion Quality Management System (QMS) via resilient transactional outbox event queues and Redis jobs, ensuring warehouse operations never freeze if the shop floor network fluctuates.
 
 ### High-Level Diagram
 
@@ -35,6 +37,7 @@
 |  - Warehouse Supervisors & Managers (Desktop Web Browser - Filament v3 Admin)                     |
 |  - Inbound / Outbound Handlers (Rugged Industrial Handheld Barcode Scanners / Zebra PDA)         |
 |  - External NestJS MES Core API (Production Orders, Hopper Requests, Packaging Verification)      |
+|  - Quality Management System (QMS) (Inspection Results, QA Release, Quarantine, COA Verification) |
 +---------------------------------------------------------------------------------------------------+
                                             │
                                             ▼ (HTTPS / REST API / Livewire WebSocket)
@@ -47,37 +50,41 @@
 |                                 Laravel 11 Application Monolith                                   |
 |  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  |
 |  │ Presentation & Transport Layer                                                              │  |
-|  │  - Filament v3 Admin & Resource Panels (Inbound, Bins, FG, Dispatch, Stock Opname)          │  |
-|  │  - REST API Controllers (/api/v1/inbound, /api/v1/staging, /api/v1/shipping)                │  |
-|  │  - Webhook Ingestion Controller (/api/v1/webhooks/mes)                                      │  |
-|  │  - Authentication: Laravel Sanctum (Tokens for Scanners/MES) & Session Guard (Web Panel)    │  |
+|  │  - Filament v3 Admin & Resource Panels (Inbound, Bins, FG, Dispatch, Stock Opname, Returns) │  |
+|  │  - REST API Controllers (/api/v1/inbound, /api/v1/staging, /api/v1/shipping, /traceability) │  |
+|  │  - Webhook Ingestion Controller (/api/v1/webhooks/mes, /api/v1/telemetry/silo-reading)      │  |
+|  │  - Authentication: Laravel Sanctum (Tokens for Scanners/MES/QMS) & Session Guard (Web Panel)│  |
 |  └─────────────────────────────────────────────────────────────────────────────────────────────┘  |
 |  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  |
 |  │ Core Domain & Service Layer                                                                 │  |
 |  │  - Inbound & Lot Allocation Service (COA validation, Heat #, GS1 QR Label Generation)       │  |
-|  │  - Location & Bin Capacity Engine (Zoning, Rack limits, Putaway guidance)                   │  |
-|  │  - FIFO Picking & Reservation Engine (Pessimistic Locking, Receipt-Time Prioritization)    │  |
-|  │  - MES Material Dispatch Gateway (Outbound sync to MES /materials/lots)                     │  |
-|  │  - Finished Goods Handover Service (Packaging reconciliation & FG rack storage)             │  |
-|  │  - Outbound Pick-Pack-Ship Engine (Delivery Order PDF generation, Truck scan verification)  │  |
+|  │  - Location & Bin Capacity Engine (Zoning, Rack limits, Putaway guidance, Min-Max Replenish)│  |
+|  │  - Strict FIFO Picking & Reservation Engine (SKIP LOCKED Concurrency, Receipt-Time Order)   │  |
+|  │  - Regrind Scrap & Blend Cap Engine (Generation tracking, 15% blend cap constraint)         │  |
+|  │  - Wave & Batch Picking Engine (S-Shape serpentine routing, batch consolidation)            │  |
+|  │  - Returns Management Service (Customer RMA, QA Quarantine Disposition, Supplier RTV)       │  |
+|  │  - MES & QMS Integration Gateway (Outbox pattern, /api/v1/traceability/* recall engine)     │  |
+|  │  - Outbound Pick-Pack-Ship Engine (Delivery Order PDF generation, Gate Pass verification)   │  |
 |  └─────────────────────────────────────────────────────────────────────────────────────────────┘  |
 |                                            │
 |                       ┌────────────────────┴────────────────────┐
 |                       ▼                                         ▼
 |  +─────────────────────────────────────────+  +────────────────────────────────────────────────+
-|  |       Relational Database (MariaDB)     |  |               Redis Cache & Queue              |
-|  |  - Transactional Inventory Balances     |  |  - Laravel Horizon Job Queues                  |
-|  |  - Bin Locations & Lot Genealogy        |  |  - Webhook Retry & Resilient MES Dispatch      |
-|  |  - Immutable Movement Audit Logs        |  |  - Real-time Scanner Rate Limiting & Lock Caches|
+|  |     Oracle Database 21c XE Container    |  |               Redis Cache & Queue              |
+|  |  - Transactional Inventory Balances     |  |  - Redis 7.2 Broker via predis/predis          |
+|  |  - Bin Locations & Lot Genealogy        |  |  - Systemd Worker Units (wms-worker@.service)  |
+|  |  - Immutable Movement Audit Logs        |  |  - Webhook Retry & Resilient Outbox Dispatch  |
+|  |  - Transactional Outbox Table           |  |  - Real-time Scanner Rate Limiting & Caches   |
 |  +─────────────────────────────────────────+  +────────────────────────────────────────────────+
-+---------------------------------------------------------------------------------------------------+
-                                            ▲
-                                            │ (HTTP Webhook / REST Events)
-+---------------------------------------------------------------------------------------------------+
-|                        Manufacturing Execution System (MES - NestJS Level 3)                       |
-|  - Receives Staged Lots -> Enables Machine Hopper Load                                            |
-|  - Emits 'packaging.pallet_sealed' -> Triggers WMS Finished Goods Receiving                       |
-+---------------------------------------------------------------------------------------------------+
+|                                           ▲                             ▲
+|                                           │                             │
++-------------------------------------------┼─────────────────────────────┼-------------------------+
+                                            ▼                             ▼
++-------------------------------------------------------+  +----------------------------------------+
+|        Manufacturing Execution System (MES - Level 3) |  |   Quality Management System (QMS)      |
+|  - Receives Staged Lots -> Enables Hopper Load        |  |  - Emits QA Release / Hold / Quarantine|
+|  - Emits 'packaging.unit_created' -> FG Receiving     |  |  - Inspects COA metrics (MFI, moisture)|
++-------------------------------------------------------+  +----------------------------------------+
 ```
 
 ---
@@ -86,15 +93,18 @@
 
 | Component | Type | Responsibility | Technology |
 |-----------|------|----------------|------------|
-| `WMS Web Portal (Filament)` | UI Panel | Back-office management for warehouse managers, inventory valuation, stock adjustments, bin map configuration, and Delivery Order printing. | Laravel 11, Filament v3, Livewire 3, Tailwind CSS |
+| `WMS Web Portal (Filament)` | UI Panel | Back-office management for warehouse managers, inventory valuation, stock adjustments, bin map configuration, Delivery Order printing, and analytics. | Laravel 11, Filament v3, Livewire 3, Tailwind CSS |
 | `Scanner Mobile / API Gateway` | REST API | Headless API consumed by rugged handheld barcode/QR scanners (Zebra TC26, Honeywell) for high-speed scan validation, putaway, and picking. | Laravel Sanctum, Form Requests, Resources |
 | `Inbound Receiving Engine` | Domain Service | Validates PO arrivals, registers supplier heat numbers, checks COA status, and dispatches ZPL/PDF label printing jobs. | Laravel Service, DomPDF / Barcode Service |
 | `Bin Topology & Putaway Engine` | Domain Service | Models warehouse spatial coordinates (Zone-Aisle-Rack-Shelf-Bin) and evaluates weight/volume capacity rules for safe putaway. | Eloquent ORM, Spatial/Hierarchical logic |
-| `FIFO Allocation Engine` | Domain Service | Determines eligible lots by earliest receipt time and lowest balance ID; enforces atomic stock reservations with `lockForUpdate()`. | Laravel Service, database transactions |
-| `MES Integration Gateway` | Integration Service | Asynchronously dispatches staged material events to the NestJS MES API and processes incoming finished goods webhooks. | Laravel HTTP Client, Guzzle, Redis Queues, Horizon |
-| `Outbound & Shipping Engine` | Domain Service | Manages picklists, scan-to-truck verification manifests, and generates official Delivery Order documents. | Laravel Service, PDF Engine |
-| `Inventory Ledger & Audit Trail` | Domain Engine | Maintains an append-only double-entry stock movement ledger (`inventory_movements`) ensuring complete auditable balance history. | Eloquent Event Observers, MariaDB InnoDB |
-| `Queue & Background Worker` | Background Worker | Handles asynchronous background tasks: label printing, webhook retries, PDF exports, and hourly stock reconciliation. | Laravel Horizon, Redis Worker |
+| `FIFO Allocation Engine` | Domain Service | Determines eligible lots by earliest receipt time (`received_at`) and lowest balance ID; enforces atomic stock reservations with `SKIP LOCKED`. | Laravel Service, `FifoAllocationService`, Oracle 21c |
+| `Regrind & Blend Cap Service` | Domain Service | Governs regrind generation tracking and ensures material blend ratios never exceed the safety cap (e.g. 15%). | `RegrindAllocationService` |
+| `Wave & Batch Picking Engine` | Domain Service | Groups delivery lines into optimal waves and batches, ordering pick tasks by S-Shape aisle travel routes. | `WaveBatchPickingService` |
+| `Dynamic Replenishment Engine` | Domain Service | Monitors forward pick bin levels against min/max thresholds and creates automated replenishment tasks from bulk reserves. | `ReplenishmentService`, Scheduled Cron |
+| `Returns Management (RMA & RTV)` | Domain Service | Handles customer return intake, QA dispositioning to quarantine cage, restock, or vendor return (RTV debit notes). | `ReturnsManagementService` |
+| `MES & QMS Gateway` | Integration Service | Dispatches staged material events to MES, processes incoming packaging webhooks, and interfaces with QMS inspection results via transactional outbox. | Laravel HTTP Client, Outbox Table, Redis Queues |
+| `Inventory Ledger & Audit Trail` | Domain Engine | Maintains an append-only double-entry stock movement ledger (`inventory_movements`) ensuring complete auditable balance history. | Eloquent Event Observers, Oracle 21c |
+| `Queue & Background Worker` | Background Worker | Handles asynchronous background tasks: label printing, outbox retries, PDF exports, and hourly stock reconciliation. | Native Linux Systemd (`wms-worker@.service`), Redis 7.2 |
 
 ---
 
@@ -108,147 +118,32 @@
   - `Warehouse Manager`: Full CRUD, stock override, master data, Delivery Order approval.
   - `Receiver`: Inbound and PO intake only.
   - `Staging Handler`: Picklist execution and MES material dispatch only.
+  - `QA Inspector`: Quality inspection, QA release, Quarantine, COA verification.
   - `FG Clerk`: Finished goods receipt and pallet putaway only.
-  - `Shipping Clerk`: Truck loading and Delivery Order generation only.
+  - `Shipping Clerk`: Truck loading, Gate Pass verification, and Delivery Order generation.
 
 ### Handheld Scanner & External Integration API
 
 - **Route Prefix:** `/api/v1`
 - **Authentication:** Stateless Bearer Token via **Laravel Sanctum**:
-  - Industrial Scanners authenticate via long-lived device tokens.
-  - NestJS MES communicates using a dedicated integration service token (`abilities: ['mes:sync']`).
+  - Industrial Scanners authenticate via device tokens.
+  - External MES and QMS systems communicate using dedicated integration service tokens (`abilities: ['mes:sync', 'qms:sync']`).
 - **Middleware Pipeline:**
   - `throttle:api`: Rate limiting (120 requests/minute per device).
   - `auth:sanctum`: Token verification and scope checks.
   - `EnsureJsonHeader`: Enforces `Accept: application/json`.
-- **Webhook Endpoint:**
-  - `POST /api/v1/webhooks/mes`: Protected by HMAC SHA-256 signature verification (`X-MES-Signature`) to guarantee authenticity of messages originating from NestJS.
+- **Webhook Endpoints:**
+  - `POST /api/v1/webhooks/mes`: Protected by HMAC SHA-256 signature verification (`X-MES-Signature`).
+  - `POST /api/v1/telemetry/silo-reading`: Authenticated silo telemetry ingestion.
 
 ---
 
-## 4. Data Flow
-
-### 4.1 Inbound Raw Material Receiving & Putaway
-
-```text
-[Supplier Truck Unloading]
-       │
-       ▼ (Receive PO & Inspect Bags/Pallets)
-[Inbound Receiver: Web Form / Scanner Form]
-       │
-       ├──► [Validate PO Number & Supplier Identity]
-       ├──► [Record Vendor Lot / Heat Number & Attach COA]
-       ├──► [Generate Raw Material Lot (Status: QA_HOLD)]
-       ▼
-[Print Barcode / QR Pallet Labels (Code128 / DataMatrix)]
-       │
-       ▼ (QA Inspector Approves Resin: Status ──► AVAILABLE)
-[Guided Putaway Scan: Scan Pallet QR ──► Scan Target Bin Barcode]
-       │
-       ▼ (Execute inside DB Transaction)
-[Update Bin Allocation & Append to inventory_movements Ledger]
-```
-
-### 4.2 MES Material Staging Handover (Shop Floor Replenishment)
-
-```text
-[MES Production Order Scheduled (Needs 500kg Polypropylene PP-503)]
-       │
-       ▼ (MES Webhook or WMS Cron Dispatch)
-[WMS Generates Staging Picklist]
-       │
-       ├──► [Apply FIFO Algorithm: Select Earliest-Received Eligible Lots]
-       ├──► [Reserve Stock via lockForUpdate() to prevent concurrent double-pick]
-       ▼
-[Material Handler scans Pallet/Bag at Warehouse Exit Door]
-       │
-       ▼
-[WMS Updates Location: STORAGE_BIN ──► STAGING_BUFFER]
-       │
-       ▼ (Asynchronous Queue Job via Redis)
-[WMS Integration Client calls MES: POST /api/v1/materials/lots]
-       │
-       ▼
-[MES Ingests Lot ID & Heat # ──► Shop Floor Operators can load Hopper]
-```
-
-### 4.3 Finished Goods Inbound Handover from MES Packaging Station
-
-```text
-[MES Packaging Station: Box/Pallet Sealed & Barcoded]
-       │
-       ▼ (MES Gateway emits 'packaging.unit_created' Webhook)
-[POST /api/v1/webhooks/mes (WMS Ingestion Controller)]
-       │
-       ├──► [Verify HMAC Signature]
-       ├──► [Record pending finished_goods_receipt with MES Carton UUID]
-       ▼
-[FG Warehouse Clerk: Scans Pallet Barcode at FG Warehouse Gate]
-       │
-       ├──► [Verify Carton Serial matches MES Handover Record]
-       ├──► [Prompt Putaway: Scan Target Rack Bin e.g. FG-RACK-02-B]
-       ▼
-[Update inventory_balances for Finished Goods SKU & Mark Handover Completed]
-```
-
-### 4.4 Outbound Shipping & Delivery Orders
-
-```text
-[Approved Delivery Order / Customer Shipping Schedule]
-       │
-       ▼
-[Generate Outbound Picklist (Optimized S-Shape Warehouse Route)]
-       │
-       ▼ (Picker retrieves Pallets from FG Bins)
-[Scan Pallet Barcodes to Confirm Pick]
-       │
-       ▼ (Truck Arrives at Shipping Bay)
-[Shipping Clerk: Scan-to-Truck Verification (Scan each box into Manifest)]
-       │
-       ├──► [If All Items Match DO: Status ──► DISPATCHED]
-       ├──► [Deduct Stock from inventory_balances]
-       ├──► [Log to inventory_movements Ledger with Transaction Type: SHIPMENT]
-       ▼
-[Generate & Print Standardized PDF Delivery Order]
-```
-
----
-
-## 5. Security Plan
-
-| Area | Strategy |
-|------|----------|
-| **Authentication** | Dual mode: Web session guard for Filament desktop users (Bcrypt/Argon2id passwords, remember tokens, optional 2FA); Laravel Sanctum bearer tokens for handheld scanners and API clients. |
-| **Authorization** | Strict Role-Based Access Control (RBAC) powered by `spatie/laravel-permission`. Resource policies restrict actions at the model level (e.g. only `Warehouse Manager` can execute inventory adjustments). |
-| **CSRF Protection** | Native Laravel CSRF tokens verified on all state-mutating web routes; Sanctum API routes protected against CSRF via stateless token validation. |
-| **XSS Prevention** | Automatic Blade and Livewire contextual HTML escaping; strict sanitization of user-entered free-text notes. |
-| **SQL Injection** | Enforced 100% via Eloquent ORM and PDO prepared statement bindings; raw queries are strictly forbidden. |
-| **File Upload Security** | Inbound COA documents (PDF/images) strictly validated for MIME type (`application/pdf`, `image/jpeg`), sanitized filenames, stored on private disks, and served only via signed URLs. |
-| **Audit Trail** | Append-only `inventory_movements` table acts as a financial-grade ledger. Every stock alteration records `user_id`, `source_bin_id`, `destination_bin_id`, `quantity`, `reference_type`, and `reference_id`. |
-
----
-
-## 6. Deployment Architecture
-
-```text
-[Development / Testing] ──► [Docker: PHP 8.3-FPM + Nginx + MariaDB 11.4 + Redis]
-                        ──► [Artisan Serve / Vite Dev Server]
-                        ──► [Mock MES Webhook Tester]
-```
-
-| Environment | Server | Domain | Branch |
-|------------|--------|--------|--------|
-| **Local Development** | Docker Compose on Local Workstation | `http://localhost:8000` | `feature/*`, `develop` |
-| **Staging / QA** | Dockerized Ubuntu Server on Factory LAN | `http://wms-staging.factory.local` | `develop` |
-| **Production** | Redundant Linux Host on Factory Subnet / HTTPS | `https://wms.factory.local` | `main` |
-
----
-
-## 7. Key Decisions
+## 4. Key Decisions & References
 
 | # | Decision | Rationale | ADR |
 |---|----------|-----------|-----|
-| 1 | Laravel 11 with Filament v3 Framework | Fast development speed, robust enterprise administrative tooling, native support for Livewire, and seamless API generation. | [`ADR-001-laravel-filament-wms-architecture.md`](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/notes/ADR-001-laravel-filament-wms-architecture.md) |
+| 1 | Laravel 11 with Filament v3 Framework | Fast development speed, robust enterprise administrative tooling, native support for Livewire, and seamless API generation. | [`ADR-001`](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/ADR-001-laravel-filament-wms-architecture.md) |
 | 2 | Double-Entry Inventory Ledger (`inventory_movements`) | Ensures every stock increase or decrease is tied to an immutable transaction record, preventing unexplainable stock discrepancies. | Included in Architecture & Database Plan |
-| 3 | Pessimistic Locking (`lockForUpdate()`) for Picking | Eliminates race conditions when multiple material handlers or automated schedulers attempt to pick the same resin lot simultaneously. | Included in Architecture & Database Plan |
-| 4 | Decoupled Asynchronous Webhook Integration with MES | Protects WMS from network timeouts or temporary maintenance downtime of the NestJS MES API. | [`SPEC-001-mes-wms-interface-contract.md`](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/notes/SPEC-001-mes-wms-interface-contract.md) |
+| 3 | Non-Blocking `SKIP LOCKED` Concurrency | Eliminates picker thread convoying and deadlock rollbacks under concurrent demand while preserving FIFO receipt-time ordering. | [`ADR-010`](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/ADR-010-redis-queue-and-skip-locked-concurrency.md) |
+| 4 | Oracle Database 21c XE as Primary Relational Store | Industrial enterprise consistency, high concurrency support, sequence generators, and ERP/MES tier alignment. | [`014-mariadb-to-oracledb-migration.md`](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/reports/tasks/014-mariadb-to-oracledb-migration.md) |
+| 5 | Transactional Outbox Pattern for MES and QMS Integration | Eliminates distributed transaction failures; outbox events are recorded atomically in the same DB transaction as inventory state changes. | [`SPEC-001`](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/SPEC-001-mes-wms-interface-contract.md) |

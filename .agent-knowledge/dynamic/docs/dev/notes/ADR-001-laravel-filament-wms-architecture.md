@@ -4,7 +4,7 @@
 **Date:** `2026-10-30`  
 **Decision Owners:** `Manufacturing IT & Supply Chain Architecture Team`  
 **Supersedes:** `None`  
-**Superseded By:** `None`
+**Superseded By:** `None` (Database later migrated to Oracle 21c XE per Workflow 014)
 
 ---
 
@@ -16,7 +16,7 @@ The system must run autonomously from the shop-floor MES (built with NestJS) whi
 
 ## Decision
 
-Develop the WMS as an independent, standalone project utilizing **Laravel 11 (PHP 8.3+)** combined with **Filament PHP v3 (TALL stack)** and **MariaDB 11.4 LTS (InnoDB)**. The application will expose a dual interface:
+Develop the WMS as an independent, standalone project utilizing **Laravel 11 (PHP 8.3+)** combined with **Filament PHP v3 (TALL stack)** and relational persistence. The application will expose a dual interface:
 1. Rich administrative web panels built with Filament for warehouse managers and logistics coordinators.
 2. Lightweight RESTful API endpoints secured by Laravel Sanctum for rugged Android industrial barcode scanners and external MES synchronization.
 
@@ -34,7 +34,7 @@ Develop the WMS as an independent, standalone project utilizing **Laravel 11 (PH
 
 - **Accelerated Delivery:** Filament v3 provides production-ready data tables, search filters, bulk actions, and modal forms out-of-the-box.
 - **Relational Integrity:** Strong ACID transactions, pessimistic row locking (`lockForUpdate()`), and Eloquent relationships prevent race conditions during material picking.
-- **Unified Ecosystem:** Native support for background queues (Laravel Horizon + Redis), PDF generation (DomPDF), and token authentication (Sanctum).
+- **Unified Ecosystem:** Native support for background queues (Redis), PDF generation (DomPDF), and token authentication (Sanctum).
 
 ### Negative or Trade-offs
 
@@ -43,11 +43,11 @@ Develop the WMS as an independent, standalone project utilizing **Laravel 11 (PH
 
 ### Follow-up
 
-- Implement automated Pest PHP test suites verifying pessimistic locking under simulated concurrent pick operations.
+- Implement automated PHPUnit test suites verifying pessimistic locking under simulated concurrent pick operations.
 - Establish the OpenAPI 3.0 contract and HMAC webhook specifications for integration with the NestJS MES.
 
 ## References
 
-- [Product Requirements Document (PRD)](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/PRD.md)
-- [Architecture Plan](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/sdd/ARCHITECTURE.md)
-- [MES-WMS Interface Specification](file:///home/ughway/Debiancode/Myprojects/Manufacturing-Execution-System/.future/docs/dev/notes/SPEC-001-mes-wms-interface-contract.md)
+- [Product Requirements Document (PRD)](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/dev/PRD.md)
+- [Architecture Plan](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/dev/sdd/ARCHITECTURE.md)
+- [MES-WMS Interface Specification](file:///home/ughway/Debiancode/Myprojects/Warehouse-Management-System/.agent-knowledge/dynamic/docs/notes/SPEC-001-mes-wms-interface-contract.md)
