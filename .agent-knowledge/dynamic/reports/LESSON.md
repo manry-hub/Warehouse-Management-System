@@ -8,5 +8,7 @@
 - When the user explicitly prohibits SQLite, do not use SQLite for subsequent verification; use the configured database platform or report the exact missing platform dependency.
 - When querying Oracle using `yajra/laravel-oci8`, avoid combining `lockForUpdate()` directly with `first()` on joined or sorted queries because OracleGrammar unsets inner query ordering when wrapping `ROWNUM = 1 FOR UPDATE`, causing `ORA-00904` or arbitrary row selection; use `lockForUpdate()->get()->first()` to ensure deterministic sorting before row acquisition.
 - When executing CLI commands or PHP scripts that depend on custom compiled extensions (such as `oci8`), explicitly export required environment variables (`ORACLE_HOME`, `LD_LIBRARY_PATH`, `PHP_INI_SCAN_DIR`) because non-interactive shells do not source `~/.bashrc`.
+- When configuring custom PHP extensions (such as `oci8` compiled into `~/.oracle-client`) and environment variables on Linux workstations, configure `~/.zshenv` and `~/.zshrc` in addition to `~/.bashrc` if the user's default shell is `zsh`. Additionally, whitelist the environment variables (`ORACLE_HOME`, `LD_LIBRARY_PATH`, `PHP_INI_SCAN_DIR`) in Laravel's `ServeCommand::$passthroughVariables` so that child server workers spawned by `php artisan serve` do not strip them.
+
 
 

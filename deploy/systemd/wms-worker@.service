@@ -1,0 +1,21 @@
+[Unit]
+Description=WMS Redis Queue Worker (Instance %i)
+After=network.target redis.service
+Requires=redis.service
+
+[Service]
+Type=simple
+User=ughway
+Group=ughway
+WorkingDirectory=/home/ughway/Debiancode/Myprojects/Warehouse-Management-System
+Environment="ORACLE_HOME=/home/ughway/.oracle-client"
+Environment="LD_LIBRARY_PATH=/home/ughway/.oracle-client/lib"
+Environment="PHP_INI_SCAN_DIR=:/home/ughway/.oracle-client"
+ExecStart=/usr/bin/php artisan queue:work redis --queue=high,default --sleep=3 --tries=3 --max-time=3600 --timeout=90
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ughway/Debiancode/Myprojects/Warehouse-Management-System/storage/logs/wms-worker-%i.log
+StandardError=append:/home/ughway/Debiancode/Myprojects/Warehouse-Management-System/storage/logs/wms-worker-%i.log
+
+[Install]
+WantedBy=multi-user.target

@@ -3,6 +3,20 @@
 
 use Symfony\Component\Console\Input\ArgvInput;
 
+// Auto-inject Oracle Instant Client & OCI8 environment if missing and re-exec
+if (! extension_loaded('oci8') && file_exists('/home/ughway/.oracle-client/oci8.so') && ! getenv('ARTISAN_OCI8_REEXEC')) {
+    putenv('ARTISAN_OCI8_REEXEC=1');
+    putenv('ORACLE_HOME=/home/ughway/.oracle-client');
+    putenv('LD_LIBRARY_PATH=/home/ughway/.oracle-client/lib' . (getenv('LD_LIBRARY_PATH') ? ':' . getenv('LD_LIBRARY_PATH') : ''));
+    putenv('PHP_INI_SCAN_DIR=:/home/ughway/.oracle-client');
+    $_ENV['ORACLE_HOME'] = '/home/ughway/.oracle-client';
+    $_ENV['LD_LIBRARY_PATH'] = '/home/ughway/.oracle-client/lib' . (getenv('LD_LIBRARY_PATH') ? ':' . getenv('LD_LIBRARY_PATH') : '');
+    $_ENV['PHP_INI_SCAN_DIR'] = ':/home/ughway/.oracle-client';
+
+    passthru(PHP_BINARY . ' ' . implode(' ', array_map('escapeshellarg', $_SERVER['argv'])), $status);
+    exit($status);
+}
+
 define('LARAVEL_START', microtime(true));
 
 // Register the Composer autoloader...

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run WMS Task Scheduler Every Minute
+After=network.target
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Unit=wms-scheduler.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=WMS Periodic Task Scheduler Runner
+After=network.target
+
+[Service]
+Type=oneshot
+User=ughway
+Group=ughway
+WorkingDirectory=/home/ughway/Debiancode/Myprojects/Warehouse-Management-System
+Environment="ORACLE_HOME=/home/ughway/.oracle-client"
+Environment="LD_LIBRARY_PATH=/home/ughway/.oracle-client/lib"
+Environment="PHP_INI_SCAN_DIR=:/home/ughway/.oracle-client"
+ExecStart=/usr/bin/php artisan schedule:run
+StandardOutput=append:/home/ughway/Debiancode/Myprojects/Warehouse-Management-System/storage/logs/wms-scheduler.log
+StandardError=append:/home/ughway/Debiancode/Myprojects/Warehouse-Management-System/storage/logs/wms-scheduler.log

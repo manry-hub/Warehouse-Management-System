@@ -42,6 +42,7 @@ class ConcurrencyAndInvariantsTest extends TestCase
             'lot_number' => 'LOT-INVARIANT-TEST',
             'item_id' => $item->id,
             'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDays(5),
         ]);
 
         // Step 1: Inbound 1000 kg
@@ -100,6 +101,7 @@ class ConcurrencyAndInvariantsTest extends TestCase
             'item_id' => $item->id,
             'expiry_date' => now()->addMonths(6),
             'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDays(2),
         ]);
 
         // Stock exactly 100 kg
@@ -128,5 +130,85 @@ class ConcurrencyAndInvariantsTest extends TestCase
         $this->assertEquals(100.0, (float) $balance->quantity_on_hand);
         $this->assertEquals(100.0, (float) $balance->quantity_reserved);
         $this->assertEquals(0.0, $balance->available_quantity);
+    }
+
+    public function test_reservation_release_restores_exact_available_balance(): void
+    {
+        $movementService = app(InventoryMovementService::class);
+        $fifoService = app(FifoAllocationService::class);
+
+        $item = Item::where('sku', 'RAW-PC-OPT-300')->firstOrFail();
+        $bin = WarehouseBin::where('bin_code', 'RM-A-01-11')->firstOrFail();
+
+        $lot = MaterialLot::create([
+            'lot_number' => 'LOT-RELEASE-TEST',
+            'item_id' => $item->id,
+            'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDay(),
+        ]);
+
+        $movementService->recordReceipt($item, $lot, $bin, 500.0);
+
+        // Allocate 150 kg
+        $allocations = $fifoService->allocate($item, 150.0);
+        $this->assertCount(1, $allocations);
+
+        $balance = InventoryBalance::where('material_lot_id', $lot->id)->firstOrFail();
+        $this->assertEquals(150.0, (float) $balance->quantity_reserved);
+        $this->assertEquals(350.0, $balance->available_quantity);
+
+        // Release 150 kg
+        $fifoService->releaseReservation($allocations[0]['balance_id'], 150.0);
+
+        $balance->refresh();
+        $this->assertEquals(0.0, (float) $balance->quantity_reserved);
+        $this->assertEquals(500.0, $balance->available_quantity);
+    }
+
+    public function test_skip_locked_allocates_multiple_bins_in_fifo_order(): void
+    {
+        $movementService = app(InventoryMovementService::class);
+        $fifoService = app(FifoAllocationService::class);
+
+        $item = Item::where('sku', 'RAW-PP-INJ-503')->firstOrFail();
+        $bin1 = WarehouseBin::where('bin_code', 'RM-A-01-11')->firstOrFail();
+        $bin2 = WarehouseBin::where('bin_code', 'RM-A-01-12')->firstOrFail();
+
+        // Lot A received 5 days ago (older)
+        $lotA = MaterialLot::create([
+            'lot_number' => 'LOT-PP-OLDER',
+            'item_id' => $item->id,
+            'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDays(5),
+            'lot_type' => MaterialLot::TYPE_VIRGIN,
+        ]);
+        $movementService->recordReceipt($item, $lotA, $bin1, 200.0);
+
+        // Lot B received 1 day ago (newer)
+        $lotB = MaterialLot::create([
+            'lot_number' => 'LOT-PP-NEWER',
+            'item_id' => $item->id,
+            'status' => MaterialLot::STATUS_AVAILABLE,
+            'received_at' => now()->subDays(1),
+            'lot_type' => MaterialLot::TYPE_VIRGIN,
+        ]);
+        $movementService->recordReceipt($item, $lotB, $bin2, 200.0);
+
+        // Allocate 250 kg (should consume 200 from Lot A first, then 50 from Lot B)
+        $allocations = $fifoService->allocate($item, 250.0);
+
+        $this->assertCount(2, $allocations);
+        $this->assertEquals('LOT-PP-OLDER', $allocations[0]['lot_number']);
+        $this->assertEquals(200.0, $allocations[0]['quantity']);
+        $this->assertEquals('LOT-PP-NEWER', $allocations[1]['lot_number']);
+        $this->assertEquals(50.0, $allocations[1]['quantity']);
+
+        // Check balances
+        $balA = InventoryBalance::where('material_lot_id', $lotA->id)->firstOrFail();
+        $balB = InventoryBalance::where('material_lot_id', $lotB->id)->firstOrFail();
+        $this->assertEquals(200.0, (float) $balA->quantity_reserved);
+        $this->assertEquals(0.0, $balA->available_quantity);
+        $this->assertEquals(50.0, (float) $balB->quantity_reserved);
+        $this->assertEquals(150.0, $balB->available_quantity);
     }
 }
