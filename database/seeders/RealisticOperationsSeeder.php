@@ -46,7 +46,7 @@ class RealisticOperationsSeeder extends Seeder
         $zoneFg = WarehouseZone::where('warehouse_id', $warehouse->id)->where('code', 'ZONE-FG')->first();
         $zoneQc = WarehouseZone::where('warehouse_id', $warehouse->id)->where('code', 'ZONE-QC')->first();
 
-        // 3. Fetch Master Items
+        // 3. Fetch Master Items (Legacy Test Items + MES Harmonized Items)
         $itemPp = Item::where('sku', 'RAW-PP-INJ-503')->first();
         $itemAbs = Item::where('sku', 'RAW-ABS-HI-121')->first();
         $itemPc = Item::where('sku', 'RAW-PC-OPT-300')->first();
@@ -55,6 +55,14 @@ class RealisticOperationsSeeder extends Seeder
         $itemBzlLh = Item::where('sku', 'PART-BZL-FR-LH')->first();
         $itemBzlRh = Item::where('sku', 'PART-BZL-FR-RH')->first();
         $itemCtn = Item::where('sku', 'BOX-CTN-50')->first();
+
+        // MES Harmonized Catalog Items
+        $itemResPpHomo = Item::where('sku', 'RES-PP-HOMO')->first();
+        $itemResAbsHi = Item::where('sku', 'RES-ABS-HI')->first();
+        $itemResPpRegrind = Item::where('sku', 'RES-PP-REGRIND')->first();
+        $itemPrdBumper = Item::where('sku', 'PRD-AUTO-BUMPER')->first();
+        $itemPrdDoorTrim = Item::where('sku', 'PRD-DOOR-TRIM')->first();
+        $itemPrdHvacDuct = Item::where('sku', 'PRD-HVAC-DUCT')->first();
 
         if (! $itemPp || ! $itemAbs || ! $itemPc || ! $itemBzlLh || ! $itemBzlRh) {
             return;
@@ -151,6 +159,43 @@ class RealisticOperationsSeeder extends Seeder
                 'status' => MaterialLot::STATUS_QUARANTINE,
                 'coa_metrics' => ['mfi_g10min' => 14.1, 'moisture_pct' => 0.09, 'qc_reason' => 'Moisture threshold exceeded (>0.02%)'],
             ],
+            // MES Harmonized Material Lots (1-to-1 parity with MES backend seed.ts)
+            ...(($itemResPpHomo) ? [[
+                'lot_number' => 'LOT-PP-202610-01',
+                'lot_type' => MaterialLot::TYPE_VIRGIN,
+                'item_id' => $itemResPpHomo->id,
+                'vendor_code' => 'VEND-LOTTE',
+                'vendor_lot_number' => 'LB-2026-X89',
+                'vendor_heat_number' => 'HEAT-PP-891',
+                'manufactured_date' => Carbon::now()->subMonths(1),
+                'expiry_date' => Carbon::parse('2027-10-31'),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+                'coa_metrics' => ['mfi_g10min' => 12.0, 'density_gcm3' => 0.905, 'moisture_pct' => 0.012],
+            ]] : []),
+            ...(($itemResAbsHi) ? [[
+                'lot_number' => 'LOT-ABS-202610-02',
+                'lot_type' => MaterialLot::TYPE_VIRGIN,
+                'item_id' => $itemResAbsHi->id,
+                'vendor_code' => 'VEND-INEOS',
+                'vendor_lot_number' => 'INEOS-5541A',
+                'vendor_heat_number' => 'HEAT-ABS-541',
+                'manufactured_date' => Carbon::now()->subMonths(1),
+                'expiry_date' => Carbon::parse('2027-12-31'),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+                'coa_metrics' => ['mfi_g10min' => 18.0, 'density_gcm3' => 1.050, 'moisture_pct' => 0.015],
+            ]] : []),
+            ...(($itemMbBlk) ? [[
+                'lot_number' => 'LOT-MB-202610-03',
+                'lot_type' => MaterialLot::TYPE_MASTERBATCH,
+                'item_id' => $itemMbBlk->id,
+                'vendor_code' => 'VEND-CLARIANT',
+                'vendor_lot_number' => 'CAB-9921',
+                'vendor_heat_number' => 'HEAT-MB-921',
+                'manufactured_date' => Carbon::now()->subMonths(2),
+                'expiry_date' => Carbon::parse('2028-06-30'),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+                'coa_metrics' => ['concentration_pct' => 40.0, 'density_gcm3' => 1.120],
+            ]] : []),
         ];
 
         $lots = [];
@@ -188,6 +233,19 @@ class RealisticOperationsSeeder extends Seeder
                 'expiry_date' => Carbon::now()->addMonths(4),
                 'status' => MaterialLot::STATUS_AVAILABLE,
             ],
+            // MES Harmonized Regrind Lot
+            ...(($itemResPpRegrind && isset($lots['LOT-PP-202610-01'])) ? [[
+                'lot_number' => 'LOT-REG-202610-04',
+                'lot_type' => MaterialLot::TYPE_REGRIND,
+                'item_id' => $itemResPpRegrind->id,
+                'parent_lot_id' => $lots['LOT-PP-202610-01']->id,
+                'parent_production_order' => 'PO-20261027-01',
+                'regrind_generation' => 1,
+                'regrind_source_machine' => 'IMM-01',
+                'manufactured_date' => Carbon::now()->subDays(3),
+                'expiry_date' => Carbon::now()->addMonths(6),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+            ]] : []),
         ];
 
         foreach ($regrindLotsData as $data) {
@@ -215,6 +273,31 @@ class RealisticOperationsSeeder extends Seeder
                 'manufactured_date' => Carbon::now()->subDays(2),
                 'status' => MaterialLot::STATUS_AVAILABLE,
             ],
+            // MES Harmonized Finished Goods Lots
+            ...(($itemPrdBumper) ? [[
+                'lot_number' => 'PKG-AUTO-BUMPER-001',
+                'lot_type' => MaterialLot::TYPE_VIRGIN,
+                'item_id' => $itemPrdBumper->id,
+                'parent_production_order' => 'PO-20261027-01',
+                'manufactured_date' => Carbon::now()->subDays(1),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+            ]] : []),
+            ...(($itemPrdDoorTrim) ? [[
+                'lot_number' => 'PKG-DOOR-TRIM-001',
+                'lot_type' => MaterialLot::TYPE_VIRGIN,
+                'item_id' => $itemPrdDoorTrim->id,
+                'parent_production_order' => 'PO-20261027-02',
+                'manufactured_date' => Carbon::now()->subDays(1),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+            ]] : []),
+            ...(($itemPrdHvacDuct) ? [[
+                'lot_number' => 'PKG-HVAC-DUCT-001',
+                'lot_type' => MaterialLot::TYPE_VIRGIN,
+                'item_id' => $itemPrdHvacDuct->id,
+                'parent_production_order' => 'PO-20261027-03',
+                'manufactured_date' => Carbon::now()->subDays(1),
+                'status' => MaterialLot::STATUS_AVAILABLE,
+            ]] : []),
         ];
 
         foreach ($fgLotsData as $data) {
@@ -300,10 +383,26 @@ class RealisticOperationsSeeder extends Seeder
             $stockBin($binB0112, $itemPp, $lots['REGRIND-PP-IMM03-02'], 450.0, 'Regrind PP Gen 1 from IMM-03');
         }
 
+        // Aisle B (Shelf 2): Stock MES Harmonized Raw Materials
+        $binB0211 = WarehouseBin::where('bin_code', 'RM-B-02-11')->first();
+        if ($binB0211 && isset($lots['LOT-PP-202610-01']) && $itemResPpHomo) {
+            $stockBin($binB0211, $itemResPpHomo, $lots['LOT-PP-202610-01'], 1000.0, 'Palletized virgin PP Homo Prime Grade (LB-2026-X89)');
+        }
+
+        $binB0212 = WarehouseBin::where('bin_code', 'RM-B-02-12')->first();
+        if ($binB0212 && isset($lots['LOT-ABS-202610-02']) && $itemResAbsHi) {
+            $stockBin($binB0212, $itemResAbsHi, $lots['LOT-ABS-202610-02'], 800.0, 'Palletized virgin ABS High Impact (INEOS-5541A)');
+        }
+
         // Zone STG: Shop Floor Machine Buffers
         $stgImm01 = WarehouseBin::where('bin_code', 'STG-IMM-01')->first();
         if ($stgImm01) {
             $stockBin($stgImm01, $itemPp, $lots['LOT-LT-260801'], 200.0, 'Staged material buffer at IMM-01 hopper');
+        }
+
+        $stgImm02 = WarehouseBin::where('bin_code', 'STG-IMM-02')->first();
+        if ($stgImm02 && isset($lots['LOT-PP-202610-01']) && $itemResPpHomo) {
+            $stockBin($stgImm02, $itemResPpHomo, $lots['LOT-PP-202610-01'], 250.0, 'Staged PP homo buffer for IMM-02 door trim');
         }
 
         $stgImm03 = WarehouseBin::where('bin_code', 'STG-IMM-03')->first();
@@ -311,7 +410,17 @@ class RealisticOperationsSeeder extends Seeder
             $stockBin($stgImm03, $itemAbs, $lots['LOT-LG-260710'], 150.0, 'Active ABS staging for IMM-03');
         }
 
-        // Zone FG: Finished Goods Automotive Bezels
+        $stgImm07 = WarehouseBin::where('bin_code', 'STG-IMM-07')->first();
+        if ($stgImm07 && isset($lots['LOT-PP-202610-01']) && $itemResPpHomo) {
+            $stockBin($stgImm07, $itemResPpHomo, $lots['LOT-PP-202610-01'], 500.0, 'Active PP homo staging for IMM-07 bumper');
+        }
+
+        $stgImm08 = WarehouseBin::where('bin_code', 'STG-IMM-08')->first();
+        if ($stgImm08 && isset($lots['LOT-MB-202610-03']) && $itemMbBlk) {
+            $stockBin($stgImm08, $itemMbBlk, $lots['LOT-MB-202610-03'], 100.0, 'Active black masterbatch staging for IMM-08');
+        }
+
+        // Zone FG: Finished Goods Automotive Bezels & Harmonized Parts
         $binFg0101 = WarehouseBin::where('bin_code', 'FG-A-01-01')->first();
         if ($binFg0101) {
             $stockBin($binFg0101, $itemBzlLh, $lots['FG-BZL-LH-26101'], 500.0, '10 Cartons Front Bezel LH (50 pcs/carton)');
@@ -320,6 +429,16 @@ class RealisticOperationsSeeder extends Seeder
         $binFg0102 = WarehouseBin::where('bin_code', 'FG-A-01-02')->first();
         if ($binFg0102) {
             $stockBin($binFg0102, $itemBzlRh, $lots['FG-BZL-RH-26102'], 600.0, '12 Cartons Front Bezel RH (50 pcs/carton)');
+        }
+
+        $binFg0201 = WarehouseBin::where('bin_code', 'FG-A-02-01')->first();
+        if ($binFg0201 && isset($lots['PKG-AUTO-BUMPER-001']) && $itemPrdBumper) {
+            $stockBin($binFg0201, $itemPrdBumper, $lots['PKG-AUTO-BUMPER-001'], 40.0, '2 Pallets Front Bumper Fascia (20 pcs/pallet)');
+        }
+
+        $binFg0202 = WarehouseBin::where('bin_code', 'FG-A-02-02')->first();
+        if ($binFg0202 && isset($lots['PKG-DOOR-TRIM-001']) && $itemPrdDoorTrim) {
+            $stockBin($binFg0202, $itemPrdDoorTrim, $lots['PKG-DOOR-TRIM-001'], 80.0, '2 Pallets Interior Door Trim (40 pcs/pallet)');
         }
 
         // Zone QC: Active Quarantined Lot

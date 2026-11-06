@@ -84,7 +84,7 @@ class WarehouseTopologySeeder extends Seeder
                     }
                 }
             } elseif ($zone->code === 'ZONE-STG') {
-                for ($m = 1; $m <= 6; $m++) {
+                for ($m = 1; $m <= 10; $m++) {
                     $binCode = sprintf('STG-IMM-%02d', $m);
                     WarehouseBin::firstOrCreate(
                         ['bin_code' => $binCode],
